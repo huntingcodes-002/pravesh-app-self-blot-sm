@@ -2,7 +2,7 @@ export const MOCK_USER = {
   email: 'rm1@rm.com',
   password: '12qwaszx',
   name: 'Albert Einstein',
-  rmId: 'RM-MHMUAE201',
+  rmId: 'RM-MH-MU-AE201',
   phone: '911'
 };
 

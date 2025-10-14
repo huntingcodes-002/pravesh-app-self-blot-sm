@@ -12,7 +12,17 @@ import { Card, CardContent } from '@/components/ui/card';
 export default function Step6Page() {
   const { currentLead, updateLead } = useLead();
   const router = useRouter();
-  const [coApplicants, setCoApplicants] = useState<any[]>([]);
+  // Using an explicit type for mock data structure
+  interface CoApplicant {
+    id: string;
+    firstName: string;
+    lastName: string;
+    relationship: string;
+    gender: string;
+    pan: string;
+    // We omit complex nested form data for mock simplicity here
+  }
+  const [coApplicants, setCoApplicants] = useState<CoApplicant[]>([]);
 
   useEffect(() => {
     if (currentLead?.formData?.step6) {
@@ -21,14 +31,31 @@ export default function Step6Page() {
   }, [currentLead]);
 
   const handleAddCoApplicant = () => {
-    const newCoApplicant = {
+    const newCoApplicant: CoApplicant = {
       id: Date.now().toString(),
-      name: 'Co-Applicant ' + (coApplicants.length + 1),
-      relationship: 'Spouse',
-      mobile: '+91 9876543210',
-      email: 'coapplicant@example.com'
+      firstName: 'Priya', 
+      lastName: 'Sharma', 
+      relationship: 'Spouse', 
+      gender: 'Female',
+      pan: 'ABCDE1234F'
     };
     setCoApplicants([...coApplicants, newCoApplicant]);
+  };
+
+  const handleExit = () => {
+    if (!currentLead) {
+        router.push('/leads');
+        return;
+    }
+    // Save current data as draft before exiting
+    updateLead(currentLead.id, {
+      formData: {
+        ...currentLead.formData,
+        step6: { coApplicants }
+      },
+      currentStep: 6
+    });
+    router.push('/leads');
   };
 
   const handleDeleteCoApplicant = (id: string) => {
@@ -53,9 +80,14 @@ export default function Step6Page() {
   };
 
   return (
-    <DashboardLayout title="Co-Applicant Details" showNotifications={false}>
+    <DashboardLayout 
+        title="Co-Applicant Details - Step 6" 
+        showNotifications={false}
+        showExitButton={true} 
+        onExit={handleExit}
+    >
       <div className="max-w-2xl mx-auto">
-        <ProgressBar currentStep={6} />
+        <ProgressBar currentStep={6} totalSteps={11} />
 
         <div className="bg-white rounded-xl shadow-sm p-6 space-y-6">
           <div>
@@ -75,11 +107,11 @@ export default function Step6Page() {
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1">
-                        <h3 className="font-semibold text-gray-900 mb-2">{coApplicant.name}</h3>
+                        <h3 className="font-semibold text-gray-900 mb-2">{coApplicant.firstName} {coApplicant.lastName}</h3>
                         <div className="space-y-1 text-sm text-gray-600">
                           <p><span className="font-medium">Relationship:</span> {coApplicant.relationship}</p>
-                          <p><span className="font-medium">Mobile:</span> {coApplicant.mobile}</p>
-                          <p><span className="font-medium">Email:</span> {coApplicant.email}</p>
+                          <p><span className="font-medium">Gender:</span> {coApplicant.gender}</p>
+                          <p><span className="font-medium">PAN:</span> {coApplicant.pan}</p>
                         </div>
                       </div>
                       <div className="flex space-x-2">

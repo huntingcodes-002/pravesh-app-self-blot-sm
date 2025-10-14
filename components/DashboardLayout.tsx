@@ -4,19 +4,25 @@ import React, { useState } from 'react';
 import { Menu, Bell } from 'lucide-react';
 import Sidebar from './Sidebar';
 import { useAuth } from '@/contexts/AuthContext';
+import { X } from 'lucide-react'; // Import X icon
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
   title?: string;
   showNotifications?: boolean;
   notificationCount?: number;
+  // New props for the Exit button (Req 2)
+  showExitButton?: boolean;
+  onExit?: () => void;
 }
 
 export default function DashboardLayout({
   children,
   title,
   showNotifications = true,
-  notificationCount = 3
+  notificationCount = 3,
+  showExitButton = false, // Default to false
+  onExit,
 }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user } = useAuth();
@@ -38,6 +44,15 @@ export default function DashboardLayout({
           </div>
 
           <div className="flex items-center space-x-4">
+            {showExitButton && onExit && (
+                <button
+                    onClick={onExit}
+                    className="p-2 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-200"
+                    title="Exit and Save Draft"
+                >
+                    <X className="w-5 h-5 text-red-600" />
+                </button>
+            )}
             {showNotifications && (
               <button className="relative p-2 hover:bg-gray-100 rounded-lg transition-colors">
                 <Bell className="w-6 h-6 text-gray-700" />

@@ -15,11 +15,12 @@ export default function Step7Page() {
   const { currentLead, updateLead } = useLead();
   const router = useRouter();
   const [formData, setFormData] = useState({
-    collateralType: '',
-    ownershipType: '',
-    propertyValue: '',
-    description: '',
-    location: ''
+    collateralType: currentLead?.formData?.step7?.collateralType || '',
+    ownershipType: currentLead?.formData?.step7?.ownershipType || '',
+    currency: currentLead?.formData?.step7?.currency || 'INR', // Added Currency
+    propertyValue: currentLead?.formData?.step7?.propertyValue || '',
+    description: currentLead?.formData?.step7?.description || '',
+    location: currentLead?.formData?.step7?.location || '' // Changed to Input field type (string)
   });
 
   useEffect(() => {
@@ -27,6 +28,8 @@ export default function Step7Page() {
       setFormData(currentLead.formData.step7);
     }
   }, [currentLead]);
+
+  const setField = (key: string, value: string | number) => setFormData(prev => ({ ...prev, [key]: value }));
 
   const handleNext = () => {
     if (!currentLead) return;
@@ -40,6 +43,22 @@ export default function Step7Page() {
     });
     router.push('/lead/step8');
   };
+  
+  const handleExit = () => {
+    if (!currentLead) {
+        router.push('/leads');
+        return;
+    }
+    // Save current data as draft before exiting
+    updateLead(currentLead.id, {
+      formData: {
+        ...currentLead.formData,
+        step7: formData
+      },
+      currentStep: 7
+    });
+    router.push('/leads');
+  };
 
   const handlePrevious = () => {
     router.push('/lead/step6');
@@ -48,91 +67,123 @@ export default function Step7Page() {
   const canProceed = formData.collateralType && formData.ownershipType && formData.propertyValue;
 
   return (
-    <DashboardLayout title="Collateral Details" showNotifications={false}>
+    <DashboardLayout 
+        title="Collateral Details - Step 7" 
+        showNotifications={false}
+        showExitButton={true} 
+        onExit={handleExit}
+    >
       <div className="max-w-2xl mx-auto">
-        <ProgressBar currentStep={7} />
+        <ProgressBar currentStep={7} totalSteps={11} />
 
         <div className="bg-white rounded-xl shadow-sm p-6 space-y-6">
           <div>
             <h2 className="text-xl font-semibold text-gray-900 mb-6">Collateral Information</h2>
 
             <div className="space-y-4">
+              
+              {/* 1. Collateral Type */}
               <div>
                 <Label htmlFor="collateralType">
                   Collateral Type <span className="text-red-500">*</span>
                 </Label>
                 <Select
                   value={formData.collateralType}
-                  onValueChange={(value) => setFormData({ ...formData, collateralType: value })}
+                  onValueChange={(value) => setField('collateralType', value)}
                 >
                   <SelectTrigger id="collateralType" className="h-12">
                     <SelectValue placeholder="Select collateral type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="residential">Residential Property</SelectItem>
-                    <SelectItem value="commercial">Commercial Property</SelectItem>
-                    <SelectItem value="land">Land</SelectItem>
-                    <SelectItem value="vehicle">Vehicle</SelectItem>
-                    <SelectItem value="gold">Gold</SelectItem>
+                    <SelectItem value="property">🏠 Property</SelectItem>
+                    <SelectItem value="vehicle">🚗 Vehicle</SelectItem>
+                    <SelectItem value="gold">💰 Gold</SelectItem>
+                    <SelectItem value="fd">💳 Fixed Deposit</SelectItem>
+                    <SelectItem value="shares">📈 Shares/Securities</SelectItem>
+                    <SelectItem value="machinery">⚙️ Machinery</SelectItem>
+                    <SelectItem value="other">📋 Other</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
+              {/* 2. Ownership Type */}
               <div>
                 <Label htmlFor="ownershipType">
                   Ownership Type <span className="text-red-500">*</span>
                 </Label>
                 <Select
                   value={formData.ownershipType}
-                  onValueChange={(value) => setFormData({ ...formData, ownershipType: value })}
+                  onValueChange={(value) => setField('ownershipType', value)}
                 >
                   <SelectTrigger id="ownershipType" className="h-12">
                     <SelectValue placeholder="Select ownership type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="self">Self Owned</SelectItem>
-                    <SelectItem value="joint">Joint Ownership</SelectItem>
-                    <SelectItem value="family">Family Owned</SelectItem>
+                    <SelectItem value="owned">Owned</SelectItem>
+                    <SelectItem value="rented">Rented</SelectItem>
+                    <SelectItem value="leased">Leased</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
+              {/* 3. Estimated Property Value (with Currency) */}
               <div>
                 <Label htmlFor="propertyValue">
-                  Estimated Property Value (INR) <span className="text-red-500">*</span>
+                  Estimated Property Value <span className="text-red-500">*</span>
                 </Label>
-                <Input
-                  id="propertyValue"
-                  type="number"
-                  value={formData.propertyValue}
-                  onChange={(e) => setFormData({ ...formData, propertyValue: e.target.value })}
-                  placeholder="Enter property value"
-                  className="h-12"
-                />
-                <p className="text-xs text-gray-500 mt-1">Typical range: ₹50,000 - ₹10,00,00,000</p>
+                <div className="flex">
+                  <Select
+                    value={formData.currency}
+                    onValueChange={(value) => setField('currency', value)}
+                  >
+                    <SelectTrigger id="currency" className="h-12 w-24 rounded-r-none border-r-0">
+                      <SelectValue placeholder="₹ INR" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="INR">₹ INR</SelectItem>
+                      <SelectItem value="USD">$ USD</SelectItem>
+                      <SelectItem value="EUR">€ EUR</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    id="propertyValue"
+                    type="number"
+                    value={formData.propertyValue}
+                    onChange={(e) => setField('propertyValue', e.target.value)}
+                    placeholder="Enter estimated value"
+                    className="h-12 rounded-l-none"
+                    min="1" max="999999999"
+                  />
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Enter value between ₹1,00,000 to ₹99,99,99,999</p>
               </div>
 
+              {/* 4. Collateral Description */}
               <div>
                 <Label htmlFor="description">Collateral Description</Label>
                 <Textarea
                   id="description"
                   value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Describe the collateral property..."
+                  onChange={(e) => setField('description', e.target.value)}
+                  placeholder="Enter detailed description of the collateral"
                   className="min-h-[100px]"
+                />
+                <p className="text-xs text-gray-500 mt-1">Optional: Provide additional details about the collateral</p>
+              </div>
+
+              {/* 5. Location (Changed from Textarea to Input) */}
+              <div>
+                <Label htmlFor="location">Location</Label>
+                <Input
+                  id="location"
+                  type="text"
+                  value={formData.location}
+                  onChange={(e) => setField('location', e.target.value)}
+                  placeholder="Enter collateral location"
+                  className="h-12"
                 />
               </div>
 
-              <div>
-                <Label htmlFor="location">Location</Label>
-                <Textarea
-                  id="location"
-                  value={formData.location}
-                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  placeholder="Enter property location..."
-                  className="min-h-[80px]"
-                />
-              </div>
             </div>
           </div>
 

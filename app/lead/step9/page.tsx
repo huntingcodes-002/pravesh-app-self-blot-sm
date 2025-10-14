@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 
 export default function Step9Page() {
-  const { currentLead, updateLead } = useLead();
+  const { currentLead, updateLead, submitLead } = useLead();
   const router = useRouter();
   const [expandedSections, setExpandedSections] = useState({
     application: true,
@@ -25,36 +25,58 @@ export default function Step9Page() {
     setExpandedSections({ ...expandedSections, [section]: !expandedSections[section] });
   };
 
+  const handleEdit = (step: number) => {
+    router.push(`/lead/step${step}`);
+  };
+
   const handleSubmit = () => {
     if (!currentLead) return;
 
+    if (moveToNextStage) {
+        updateLead(currentLead.id, {
+            formData: {
+                ...currentLead.formData,
+                step9: { moveToNextStage }
+            },
+            currentStep: 10 // FIX: Route to the Documents Page (Step 10)
+        });
+        // FIX: Route to Documents (Step 10)
+        router.push('/lead/step10'); 
+    } else {
+        submitLead(currentLead.id);
+        router.push('/leads'); // Submit without moving to next pipeline step
+    }
+  };
+
+  const handleExit = () => {
+    if (!currentLead) {
+        router.push('/leads');
+        return;
+    }
+    // Save current data as draft before exiting
     updateLead(currentLead.id, {
       formData: {
         ...currentLead.formData,
         step9: { moveToNextStage }
       },
-      currentStep: moveToNextStage ? 10 : 11
+      currentStep: 9
     });
-
-    if (moveToNextStage) {
-      router.push('/lead/step10');
-    } else {
-      router.push('/lead/step11');
-    }
+    router.push('/leads');
   };
 
   const handlePrevious = () => {
     router.push('/lead/step8');
   };
 
-  const handleEdit = (step: number) => {
-    router.push(`/lead/step${step}`);
-  };
-
   return (
-    <DashboardLayout title="Review Application" showNotifications={false}>
+    <DashboardLayout 
+        title="Review Application - Step 9" 
+        showNotifications={false}
+        showExitButton={true} 
+        onExit={handleExit} 
+    >
       <div className="max-w-2xl mx-auto">
-        <ProgressBar currentStep={9} />
+        <ProgressBar currentStep={9} totalSteps={11} />
 
         <div className="bg-white rounded-xl shadow-sm p-6 space-y-6">
           <div>

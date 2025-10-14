@@ -1,11 +1,14 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+
+export type LeadStatus = 'Draft' | 'Submitted' | 'Approved' | 'Disbursed' | 'Rejected';
 
 export interface Lead {
   id: string;
   appId: string;
-  status: 'Draft' | 'Submitted' | 'Approved' | 'Disbursed' | 'Rejected';
+  status: LeadStatus;
   customerName: string;
   customerMobile: string;
   customerFirstName?: string;
@@ -16,7 +19,7 @@ export interface Lead {
   gender?: string;
   loanAmount?: number;
   loanPurpose?: string;
-  currentStep: number;
+  currentStep: number; // Max step is now 9 (was 10)
   formData: any;
   createdAt: string;
   updatedAt: string;
@@ -28,17 +31,20 @@ interface LeadContextType {
   createLead: () => void;
   updateLead: (leadId: string, data: Partial<Lead>) => void;
   submitLead: (leadId: string) => void;
+  updateLeadStatus: (leadId: string, status: LeadStatus) => void; // New function
   setCurrentLead: (lead: Lead | null) => void;
 }
 
 const LeadContext = createContext<LeadContextType | undefined>(undefined);
+
+const STORAGE_KEY = 'leads';
 
 export function LeadProvider({ children }: { children: React.ReactNode }) {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [currentLead, setCurrentLead] = useState<Lead | null>(null);
 
   useEffect(() => {
-    const storedLeads = localStorage.getItem('leads');
+    const storedLeads = localStorage.getItem(STORAGE_KEY);
     if (storedLeads) {
       setLeads(JSON.parse(storedLeads));
     } else {
@@ -60,7 +66,7 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
           status: 'Submitted',
           customerName: 'Jane Smith',
           customerMobile: '+91 9876543211',
-          currentStep: 11,
+          currentStep: 10, // Max step
           formData: {},
           createdAt: '2025-10-09T09:00:00Z',
           updatedAt: '2025-10-11T16:45:00Z'
@@ -71,7 +77,7 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
           status: 'Approved',
           customerName: 'Robert Johnson',
           customerMobile: '+91 9876543212',
-          currentStep: 11,
+          currentStep: 10,
           formData: {},
           createdAt: '2025-10-08T11:00:00Z',
           updatedAt: '2025-10-10T10:20:00Z'
@@ -93,20 +99,20 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
           status: 'Disbursed',
           customerName: 'Michael Brown',
           customerMobile: '+91 9876543214',
-          currentStep: 11,
+          currentStep: 10,
           formData: {},
           createdAt: '2025-10-05T08:00:00Z',
           updatedAt: '2025-10-08T12:00:00Z'
         }
       ];
       setLeads(dummyLeads);
-      localStorage.setItem('leads', JSON.stringify(dummyLeads));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(dummyLeads));
     }
   }, []);
 
   const saveLeads = (updatedLeads: Lead[]) => {
     setLeads(updatedLeads);
-    localStorage.setItem('leads', JSON.stringify(updatedLeads));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedLeads));
   };
 
   const createLead = () => {
@@ -149,7 +155,17 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
   const submitLead = (leadId: string) => {
     const updatedLeads = leads.map(lead =>
       lead.id === leadId
-        ? { ...lead, status: 'Submitted' as const, updatedAt: new Date().toISOString() }
+        ? { ...lead, status: 'Submitted' as const, currentStep: 10, updatedAt: new Date().toISOString() }
+        : lead
+    );
+    saveLeads(updatedLeads);
+  };
+
+  // New function for status update (Requirement 6)
+  const updateLeadStatus = (leadId: string, status: LeadStatus) => {
+    const updatedLeads = leads.map(lead =>
+      lead.id === leadId
+        ? { ...lead, status: status, updatedAt: new Date().toISOString() }
         : lead
     );
     saveLeads(updatedLeads);
@@ -163,6 +179,7 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
         createLead,
         updateLead,
         submitLead,
+        updateLeadStatus,
         setCurrentLead
       }}
     >

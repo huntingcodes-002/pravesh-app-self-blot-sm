@@ -1,115 +1,54 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Upload, CheckCircle, XCircle, Loader, Trash2, RotateCcw } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import DashboardLayout from '@/components/DashboardLayout';
+import ProgressBar from '@/components/ProgressBar';
 import { useLead } from '@/contexts/LeadContext';
-import { validateFile } from '@/lib/mock-auth';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 
-interface UploadedFile {
-  id: string;
-  name: string;
-  type: string;
-  status: 'Processing' | 'Success' | 'Failed';
-  error?: string;
-}
-
-export default function Step11Page() {
-  const { currentLead, updateLead, submitLead } = useLead();
+export default function Step11EvaluationPage() { 
+  const { currentLead, updateLead, updateLeadStatus } = useLead(); 
   const router = useRouter();
   const { toast } = useToast();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [documentType, setDocumentType] = useState('');
-  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  
+  // Update form data key to step11_eval
+  const [formData, setFormData] = useState({
+    emiBouncesReason: currentLead?.formData?.step11_eval?.emiBouncesReason || '', // Required field 1
+    highInquiriesReason: currentLead?.formData?.step11_eval?.highInquiriesReason || '', // Required field 2
+  });
+  const [explanation1, setExplanation1] = useState(currentLead?.formData?.step11_eval?.explanation1 || ''); 
+  const [explanation2, setExplanation2] = useState(currentLead?.formData?.step11_eval?.explanation2 || ''); 
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0 || !documentType) {
-      toast({
-        title: 'Error',
-        description: 'Please select a document type first',
-        variant: 'destructive'
-      });
-      return;
+  useEffect(() => {
+    if (currentLead?.formData?.step11_eval) {
+        setFormData({
+            emiBouncesReason: currentLead.formData.step11_eval.emiBouncesReason || '',
+            highInquiriesReason: currentLead.formData.step11_eval.highInquiriesReason || '',
+        });
+        // Keeping explanation fields for custom data, though HTML didn't explicitly map them to risk answers
+        setExplanation1(currentLead.formData.step11_eval.explanation1 || '');
+        setExplanation2(currentLead.formData.step11_eval.explanation2 || '');
     }
+  }, [currentLead]);
+  
+  const setField = (key: string, value: string) => setFormData(prev => ({ ...prev, [key]: value }));
 
-    const file = files[0];
-    const fileId = Date.now().toString();
-
-    const newFile: UploadedFile = {
-      id: fileId,
-      name: file.name,
-      type: documentType,
-      status: 'Processing'
-    };
-
-    setUploadedFiles([...uploadedFiles, newFile]);
-
+  const handleReject = () => {
+    if (!currentLead) return;
+    updateLeadStatus(currentLead.id, 'Rejected'); 
     toast({
-      title: 'Processing',
-      description: `Uploading ${file.name}...`
+        title: 'Application Rejected',
+        description: `Lead ${currentLead.appId} status set to Rejected.`,
+        variant: 'destructive',
     });
-
-    setTimeout(() => {
-      const validation = validateFile(file.name);
-
-      setUploadedFiles(prev =>
-        prev.map(f =>
-          f.id === fileId
-            ? {
-                ...f,
-                status: validation.valid ? 'Success' : 'Failed',
-                error: validation.error
-              }
-            : f
-        )
-      );
-
-      if (validation.valid) {
-        toast({
-          title: 'Success',
-          description: `${file.name} uploaded successfully`,
-          className: 'bg-green-50 border-green-200'
-        });
-      } else {
-        toast({
-          title: 'Failed',
-          description: validation.error || 'File validation failed',
-          variant: 'destructive'
-        });
-      }
-    }, 1500);
-
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
-
-  const handleRetry = (fileId: string) => {
-    setUploadedFiles(prev =>
-      prev.map(f => (f.id === fileId ? { ...f, status: 'Processing' as const } : f))
-    );
-
-    setTimeout(() => {
-      setUploadedFiles(prev =>
-        prev.map(f => (f.id === fileId ? { ...f, status: 'Success' as const, error: undefined } : f))
-      );
-      toast({
-        title: 'Success',
-        description: 'File uploaded successfully',
-        className: 'bg-green-50 border-green-200'
-      });
-    }, 1000);
-  };
-
-  const handleDelete = (fileId: string) => {
-    setUploadedFiles(uploadedFiles.filter(f => f.id !== fileId));
+    router.push('/leads');
   };
 
   const handleSaveDraft = () => {
@@ -117,150 +56,202 @@ export default function Step11Page() {
     updateLead(currentLead.id, {
       formData: {
         ...currentLead.formData,
-        step11: { files: uploadedFiles }
-      }
+        step11_eval: { ...formData, explanation1, explanation2 }
+      },
+      currentStep: 11
+    });
+    toast({
+        title: 'Draft Saved',
+        description: `Evaluation draft saved successfully.`,
     });
     router.push('/leads');
   };
 
-  const handleSubmitWithoutDocs = () => {
+  const handleApprove = () => {
     if (!currentLead) return;
-    submitLead(currentLead.id);
-    toast({
-      title: 'Success',
-      description: 'Lead submitted without documents',
-      className: 'bg-green-50 border-green-200'
-    });
-    setTimeout(() => router.push('/leads'), 1000);
-  };
-
-  const handleSaveAndContinue = () => {
-    const requiredTypes = ['PAN', 'Adhaar', 'BankStatement', 'CollateralProperty'];
-    const successFiles = uploadedFiles.filter(f => f.status === 'Success');
-    const hasAllRequired = requiredTypes.every(type =>
-      successFiles.some(f => f.name.toLowerCase().includes(type.toLowerCase().substring(0, 3)))
-    );
-
-    if (!hasAllRequired) {
-      toast({
-        title: 'Validation Failed',
-        description: 'All 4 documents (PAN, Adhaar, Bank Statement, Collateral Property) must be successfully uploaded',
-        variant: 'destructive'
-      });
-      return;
+    
+    // Check conditional fields (if present, they must be filled)
+    if (!formData.emiBouncesReason.trim() || !formData.highInquiriesReason.trim()) {
+        toast({
+            title: 'Missing Explanations',
+            description: 'Please answer all conditional questions before approving.',
+            variant: 'destructive',
+        });
+        return;
     }
 
-    if (!currentLead) return;
-    submitLead(currentLead.id);
-    toast({
-      title: 'Success',
-      description: 'Lead submitted successfully with all documents',
-      className: 'bg-green-50 border-green-200'
+    // Save evaluation data
+    updateLead(currentLead.id, {
+      formData: {
+        ...currentLead.formData,
+        step11_eval: { ...formData, explanation1, explanation2 }
+      }
     });
-    setTimeout(() => router.push('/leads'), 1000);
+    
+    updateLeadStatus(currentLead.id, 'Approved'); 
+    
+    toast({
+        title: 'Application Approved',
+        description: `Lead ${currentLead.appId} status set to Approved.`,
+        className: 'bg-green-50 border-green-200',
+    });
+
+    router.push('/leads'); 
   };
 
+  const handlePrevious = () => {
+    // Back to Documents page (Step 10)
+    router.push('/lead/step10'); 
+  };
+  
+  const canApprove = formData.emiBouncesReason.trim() && formData.highInquiriesReason.trim();
+
+
   return (
-    <DashboardLayout title="Document Upload" showNotifications={false}>
+    <DashboardLayout 
+        title="Evaluation & Assessment - Step 11" 
+        showNotifications={false}
+        showExitButton={true}
+        onExit={handleSaveDraft} 
+    >
       <div className="max-w-2xl mx-auto">
+        <ProgressBar currentStep={11} totalSteps={11} /> 
+
         <div className="bg-white rounded-xl shadow-sm p-6 space-y-6">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">KYC Documents</h2>
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">Credit & Risk Evaluation</h2>
 
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="documentType">Select Document Type</Label>
-                <Select value={documentType} onValueChange={setDocumentType}>
-                  <SelectTrigger id="documentType" className="h-12">
-                    <SelectValue placeholder="Select document type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="PAN">PAN Card</SelectItem>
-                    <SelectItem value="Adhaar">Adhaar Card</SelectItem>
-                    <SelectItem value="BankStatement">Bank Statement</SelectItem>
-                    <SelectItem value="CollateralProperty">Collateral Property Document</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            {/* Application Summary - kept generic for brevity */}
+            <Card className="mb-6">
+                <CardContent className="p-4 space-y-3">
+                    <h3 className="font-semibold text-gray-900 border-b pb-2">Application Summary</h3>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <span className="text-gray-500">Customer:</span>
+                            <p className="font-medium text-gray-900">{currentLead?.customerName || 'N/A'}</p>
+                        </div>
+                        <div>
+                            <span className="text-gray-500">Loan Amount:</span>
+                            <p className="font-medium text-gray-900">₹{currentLead?.loanAmount?.toLocaleString() || 'N/A'}</p>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
 
-              <div
-                onClick={() => documentType && fileInputRef.current?.click()}
-                className={`border-2 border-dashed rounded-lg p-8 text-center transition-all ${
-                  documentType
-                    ? 'border-blue-300 bg-blue-50 hover:bg-blue-100 cursor-pointer'
-                    : 'border-gray-300 bg-gray-50 cursor-not-allowed'
-                }`}
-              >
-                <Upload className={`w-12 h-12 mx-auto mb-3 ${documentType ? 'text-blue-600' : 'text-gray-400'}`} />
-                <p className={`font-medium ${documentType ? 'text-blue-900' : 'text-gray-500'}`}>
-                  {documentType ? 'Click to upload file' : 'Select document type first'}
-                </p>
-                <p className="text-sm text-gray-500 mt-1">Maximum file size: 5MB</p>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  className="hidden"
-                  onChange={handleFileSelect}
-                  accept=".jpg,.jpeg,.png,.pdf"
-                />
-              </div>
 
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
-                <p className="font-semibold mb-1">Valid filenames for demo:</p>
-                <p>pan.jpg, adhaar.jpg, bankStm.pdf, colProp.jpg</p>
-              </div>
-
-              {uploadedFiles.length > 0 && (
+            {/* 1. BRE Results - Conditional Approval Section */}
+            <div className="bg-amber-50 border-2 border-amber-200 rounded-lg p-4 mb-6 space-y-4">
+              <div className="flex items-start space-x-3">
+                <AlertTriangle className="w-6 h-6 text-amber-600 flex-shrink-0 mt-0.5" />
                 <div>
-                  <h3 className="font-semibold text-gray-900 mb-3">Uploaded Documents</h3>
-                  <div className="space-y-2">
-                    {uploadedFiles.map((file) => (
-                      <Card key={file.id}>
-                        <CardContent className="p-4">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-3 flex-1 min-w-0">
-                              {file.status === 'Processing' && (
-                                <Loader className="w-5 h-5 text-blue-600 animate-spin flex-shrink-0" />
-                              )}
-                              {file.status === 'Success' && (
-                                <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
-                              )}
-                              {file.status === 'Failed' && (
-                                <XCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
-                              )}
-                              <div className="flex-1 min-w-0">
-                                <p className="font-medium text-gray-900 truncate">{file.name}</p>
-                                <p className="text-xs text-gray-500">{file.type}</p>
-                                {file.error && <p className="text-xs text-red-600 mt-1">{file.error}</p>}
-                              </div>
-                            </div>
-                            <div className="flex space-x-2 ml-3">
-                              {file.status === 'Failed' && (
-                                <button
-                                  onClick={() => handleRetry(file.id)}
-                                  className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 flex items-center justify-center transition-colors"
-                                >
-                                  <RotateCcw className="w-4 h-4" />
-                                </button>
-                              )}
-                              <button
-                                onClick={() => handleDelete(file.id)}
-                                className="w-8 h-8 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 flex items-center justify-center transition-colors"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
+                  <h3 className="font-semibold text-amber-900 mb-1">Conditional Approval</h3>
+                  <p className="text-sm text-amber-800">
+                    The application requires additional clarification before approval.
+                  </p>
                 </div>
-              )}
+              </div>
+              
+              {/* Conditional Questions */}
+              <div className="space-y-4 pt-2">
+                <div>
+                    <Label htmlFor="emiBouncesReason">
+                        Why are there more than 3 EMI bounces in the last 12 months? <span className="text-red-500">*</span>
+                    </Label>
+                    <Textarea 
+                        id="emiBouncesReason" 
+                        rows={3} 
+                        value={formData.emiBouncesReason}
+                        onChange={(e) => setField('emiBouncesReason', e.target.value)}
+                        placeholder="Please provide a detailed explanation..."
+                        className="min-h-[80px] mt-2"
+                        required
+                    />
+                </div>
+                
+                <div>
+                    <Label htmlFor="highInquiriesReason">
+                        Reason for high credit inquiries (8 inquiries in last 6 months)? <span className="text-red-500">*</span>
+                    </Label>
+                    <Textarea 
+                        id="highInquiriesReason" 
+                        rows={3} 
+                        value={formData.highInquiriesReason}
+                        onChange={(e) => setField('highInquiriesReason', e.target.value)}
+                        placeholder="Please provide a detailed explanation..."
+                        className="min-h-[80px] mt-2"
+                        required
+                    />
+                </div>
+              </div>
+            </div>
+
+            {/* 2. Credit Assessment / Risk Info Section */}
+            <div className="space-y-6">
+              
+              {/* Credit Assessment Cards */}
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-4">Credit Assessment</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-0">
+                    <CardContent className="p-4 text-center">
+                      <p className="text-sm text-blue-700 font-medium mb-1">Credit Score</p>
+                      <p className="text-3xl font-bold text-blue-900">720</p>
+                      <p className="text-xs text-blue-600 mt-1">Good</p>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-gradient-to-br from-green-50 to-green-100 border-0">
+                    <CardContent className="p-4 text-center">
+                      <p className="text-sm text-green-700 font-medium mb-1">Total Exposure</p>
+                      <p className="text-3xl font-bold text-green-900">₹8.5L</p>
+                      <p className="text-xs text-green-600 mt-1">Within Limits</p>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+
+              {/* Risk Factors List */}
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-4">Risk Assessment</h3>
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-700">High EMI Bounces</span>
+                        <Badge className="bg-red-100 text-red-700">High Risk</Badge>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-700">Multiple Inquiries</span>
+                        <Badge className="bg-yellow-100 text-yellow-700">Medium Risk</Badge>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-700">Stable Employment</span>
+                        <Badge className="bg-green-100 text-green-700">Low Risk</Badge>
+                      </div>
+                      {/* Placeholder for other factors */}
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-700">Credit History</span>
+                        <Badge className="bg-yellow-100 text-yellow-700">Medium Risk</Badge>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-700">Debt-to-Income Ratio</span>
+                        <Badge className="bg-red-100 text-red-700">High Risk</Badge>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-3 pt-4">
+          <div className="grid grid-cols-2 gap-3 pt-4">
+            <Button
+              onClick={handleReject}
+              variant="outline"
+              className="h-12 border-red-200 text-red-600 hover:bg-red-50"
+            >
+              Reject
+            </Button>
             <Button
               onClick={handleSaveDraft}
               variant="outline"
@@ -269,16 +260,18 @@ export default function Step11Page() {
               Save Draft
             </Button>
             <Button
-              onClick={handleSubmitWithoutDocs}
-              className="h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+              onClick={handlePrevious} 
+              variant="outline"
+              className="h-12"
             >
-              Submit without Docs
+              Previous
             </Button>
             <Button
-              onClick={handleSaveAndContinue}
-              className="h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+              onClick={handleApprove}
+              disabled={!canApprove}
+              className="h-12 bg-green-600 hover:bg-green-700 text-white font-semibold"
             >
-              Save & Continue
+              Approve & Finalize
             </Button>
           </div>
         </div>
