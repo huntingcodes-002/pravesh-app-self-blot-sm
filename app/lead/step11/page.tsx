@@ -240,7 +240,7 @@ export default function Step11EvaluationPage() {
             <Button
               onClick={handleReject}
               variant="outline"
-              className="h-auto min-h-12 border-red-300 text-red-600 hover:bg-red-50 font-semibold rounded-xl shadow-sm hover:shadow transition-all duration-150 text-center"
+              className="h-auto min-h-12 w-full border-red-300 text-red-600 hover:bg-red-50 font-semibold rounded-xl shadow-sm hover:shadow transition-all duration-150 text-center px-3 py-2 whitespace-normal break-words"
             >
               Reject
             </Button>
@@ -249,7 +249,7 @@ export default function Step11EvaluationPage() {
             <Button
               onClick={handlePrevious}
               variant="outline"
-              className="h-auto min-h-12 border-gray-300 text-gray-700 hover:bg-gray-100 font-semibold rounded-xl shadow-sm hover:shadow transition-all duration-150 text-center"
+              className="h-auto min-h-12 w-full border-gray-300 text-gray-700 hover:bg-gray-100 font-semibold rounded-xl shadow-sm hover:shadow transition-all duration-150 text-center px-3 py-2 whitespace-normal break-words"
             >
               Previous
             </Button>
@@ -258,7 +258,7 @@ export default function Step11EvaluationPage() {
             <Button
               onClick={handleApprove}
               disabled={!canApprove}
-              className={`h-auto min-h-12 font-semibold text-white rounded-xl shadow-md transition-all duration-200 text-center ${
+              className={`h-auto min-h-12 w-full font-semibold text-white rounded-xl shadow-md transition-all duration-200 text-center px-3 py-2 whitespace-normal break-words ${
                 canApprove
                   ? "bg-green-600 hover:bg-green-700 hover:shadow-lg hover:scale-[1.02]"
                   : "bg-gray-300 cursor-not-allowed"
@@ -267,7 +267,6 @@ export default function Step11EvaluationPage() {
               Approve & Finalize
             </Button>
           </div>
-
 
         </div>
       </div>
