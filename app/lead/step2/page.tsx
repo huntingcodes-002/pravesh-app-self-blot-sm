@@ -12,7 +12,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'; // Added Select
 import { MOCK_OTP } from '@/lib/mock-auth';
 import { cn } from '@/lib/utils';
 
@@ -22,7 +21,6 @@ export default function Step2Page() {
   const { toast } = useToast();
   
   const [formData, setFormData] = useState({
-    countryCode: currentLead?.formData?.step2?.countryCode || '+91',
     mobile: currentLead?.customerMobile || '',
     salutation: currentLead?.formData?.step2?.salutation || 'Mr',
     firstName: currentLead?.customerFirstName || '',
@@ -138,55 +136,8 @@ export default function Step2Page() {
           <h2 className="text-xl font-semibold text-gray-900 mb-6">Customer Consent & Details</h2>
 
           <div className="space-y-4">
-            {/* 1. Mobile Number with Country Code (HTML Order 1) */}
-            <div>
-                <Label htmlFor="mobile">Mobile Number <span className="text-red-500">*</span></Label>
-                <div className="flex space-x-2 items-center">
-                    <div className={cn("relative w-24", isMobileVerified && "opacity-70")}>
-                        <Select
-                            value={formData.countryCode}
-                            onValueChange={(value) => setFormData({ ...formData, countryCode: value })}
-                            disabled={isMobileVerified || isOtpSent}
-                        >
-                            <SelectTrigger id="country-code" className="h-12">
-                                <SelectValue placeholder="+91" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="+91">+91</SelectItem>
-                                <SelectItem value="+1">+1</SelectItem>
-                                <SelectItem value="+44">+44</SelectItem>
-                                <SelectItem value="+971">+971</SelectItem>
-                                <SelectItem value="+65">+65</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <div className="relative flex-1">
-                      <Input
-                        id="mobile"
-                        type="tel"
-                        maxLength={10}
-                        value={formData.mobile}
-                        onChange={(e) => setFormData({ ...formData, mobile: e.target.value.replace(/\D/g, '') })}
-                        placeholder="Enter 10-digit mobile number"
-                        className="h-12 pr-12"
-                        disabled={isMobileVerified || isOtpSent}
-                      />
-                      {isMobileVerified && (
-                        <CheckCircle className="w-5 h-5 text-green-600 absolute right-3 top-1/2 transform -translate-y-1/2" />
-                      )}
-                    </div>
-                    <Button
-                      onClick={handleSendOtp}
-                      disabled={isMobileVerified || isSendingOtp || isOtpSent || formData.mobile.length !== 10}
-                      className="h-12 w-32 bg-blue-500 hover:bg-blue-600"
-                    >
-                      {isSendingOtp ? <Loader className="w-5 h-5 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
-                      {isSendingOtp ? 'Sending...' : (isOtpSent ? 'Resend' : 'Send OTP')}
-                    </Button>
-                </div>
-            </div>
 
-            {/* 2. Salutation (HTML Order 2) */}
+            {/* 1. Salutation */}
             <div>
               <Label>Salutation</Label>
               <RadioGroup 
@@ -209,7 +160,7 @@ export default function Step2Page() {
               </RadioGroup>
             </div>
             
-            {/* 3. Name Fields (HTML Order 3 & 4) */}
+            {/* 2. Name Fields */}
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="firstName">First Name <span className="text-red-500">*</span></Label>
@@ -235,7 +186,40 @@ export default function Step2Page() {
               </div>
             </div>
 
-            {/* OTP Verification Input (HTML Order 5) */}
+            {/* 1. Mobile Number (Country Code removed) */}
+            <div>
+                <Label htmlFor="mobile">Mobile Number <span className="text-red-500">*</span></Label>
+                <div className="flex space-x-2 items-center">
+                    <div className="relative flex-1">
+                      {/* Pre-pended +91 for simplicity since country code removed */}
+                      <div className={cn("absolute left-0 top-0 h-12 flex items-center justify-center bg-gray-100 rounded-l-md px-3 text-gray-600 font-medium border border-r-0 border-gray-300", isMobileVerified && "opacity-70")}>+91</div>
+                      <Input
+                        id="mobile"
+                        type="tel"
+                        maxLength={10}
+                        value={formData.mobile}
+                        onChange={(e) => setFormData({ ...formData, mobile: e.target.value.replace(/\D/g, '') })}
+                        placeholder="Enter 10-digit mobile number"
+                        className="h-12 pl-[60px] pr-12"
+                        disabled={isMobileVerified || isOtpSent}
+                      />
+                      {isMobileVerified && (
+                        <CheckCircle className="w-5 h-5 text-green-600 absolute right-3 top-1/2 transform -translate-y-1/2" />
+                      )}
+                    </div>
+                    <Button
+                      onClick={handleSendOtp}
+                      disabled={isMobileVerified || isSendingOtp || isOtpSent || formData.mobile.length !== 10}
+                      className="h-12 w-32 bg-blue-500 hover:bg-blue-600"
+                    >
+                      {isSendingOtp ? <Loader className="w-5 h-5 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
+                      {isSendingOtp ? 'Sending...' : (isOtpSent ? 'Resend' : 'Send OTP')}
+                    </Button>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">OTP sent to +91 {formData.mobile} for verification</p>
+            </div>
+
+            {/* OTP Verification Input */}
             {isOtpSent && !isMobileVerified && (
               <div className="space-y-3 p-4 border border-blue-200 rounded-lg bg-blue-50">
                 <Label>Enter 6-Digit OTP (Mock: {MOCK_OTP})</Label>

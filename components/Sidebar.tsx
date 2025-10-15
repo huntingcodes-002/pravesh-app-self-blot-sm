@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { X, Home, FileText, Bell, User, LogOut } from 'lucide-react';
+import { X, Home, FileText, Bell, User, LogOut, TrendingUp } from 'lucide-react'; // Added TrendingUp
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 
@@ -86,6 +86,14 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             >
               <FileText className="w-5 h-5 text-blue-600" />
               <span className="font-medium">Leads</span>
+            </button>
+
+            <button
+              onClick={() => handleNavigation('/status')}
+              className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-blue-50 transition-colors text-left"
+            >
+              <TrendingUp className="w-5 h-5 text-blue-600" />
+              <span className="font-medium">Update Status</span>
             </button>
 
             <button

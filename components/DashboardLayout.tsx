@@ -1,17 +1,15 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Menu, Bell } from 'lucide-react';
+import { Menu, Bell, X } from 'lucide-react'; // Removed TrendingUp
 import Sidebar from './Sidebar';
 import { useAuth } from '@/contexts/AuthContext';
-import { X } from 'lucide-react'; // Import X icon
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
   title?: string;
   showNotifications?: boolean;
   notificationCount?: number;
-  // New props for the Exit button (Req 2)
   showExitButton?: boolean;
   onExit?: () => void;
 }
@@ -21,11 +19,13 @@ export default function DashboardLayout({
   title,
   showNotifications = true,
   notificationCount = 3,
-  showExitButton = false, // Default to false
+  showExitButton = false,
   onExit,
 }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user } = useAuth();
+  
+  // Removed handleOpenStatusUpdate since it is now accessed via Sidebar/dedicated page
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -44,6 +44,8 @@ export default function DashboardLayout({
           </div>
 
           <div className="flex items-center space-x-4">
+             {/* Removed "Update Status" button from header */}
+
             {showExitButton && onExit && (
                 <button
                     onClick={onExit}

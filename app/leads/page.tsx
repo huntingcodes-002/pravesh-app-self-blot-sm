@@ -16,7 +16,7 @@ import { Sheet, SheetContent } from '@/components/ui/sheet';
 import ApplicationPreview from '@/components/ApplicationPreview';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar as DatePicker } from '@/components/ui/calendar';
-import { format } from 'date-fns'; // <-- IMPORTANT: Added format import
+import { format } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import useEmblaCarousel from 'embla-carousel-react';
 
@@ -304,7 +304,7 @@ export default function LeadsDashboardPage() {
                       <p className="font-semibold text-gray-900">{lead.appId}</p>
                       <p className="text-sm font-medium text-gray-700">{lead.customerName || 'New Lead'}</p>
                       <p className="text-xs text-gray-500">{lead.customerMobile}</p>
-                      {/* NEW: Updated Timestamp */}
+                      {/* Updated Timestamp */}
                       <p className="text-xs text-gray-400">
                         Updated: {format(new Date(lead.updatedAt), 'd MMM yyyy, hh:mm a')}
                       </p>
@@ -339,23 +339,7 @@ export default function LeadsDashboardPage() {
                         )}
                       </Button>
                       
-                      {/* Status Selection (Req 6) */}
-                      {lead.status !== 'Draft' && (
-                        <Select 
-                            value={lead.status}
-                            onValueChange={(newStatus) => lead.id && updateLeadStatus(lead.id, newStatus as LeadStatus)}
-                        >
-                          <SelectTrigger className="w-[120px] h-8 text-xs font-semibold px-2">
-                              <SelectValue placeholder={lead.status} />
-                          </SelectTrigger>
-                          <SelectContent>
-                              <SelectItem value="Submitted">Submitted</SelectItem>
-                              <SelectItem value="Approved">Approved</SelectItem>
-                              <SelectItem value="Disbursed">Disbursed</SelectItem>
-                              <SelectItem value="Rejected">Rejected</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      )}
+                      {/* REMOVED: Status Selection dropdown (Now in separate UI) */}
                     </div>
                   </div>
                 </CardContent>

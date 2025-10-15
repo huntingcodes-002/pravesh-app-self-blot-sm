@@ -18,13 +18,11 @@ export default function Step11EvaluationPage() {
   const router = useRouter();
   const { toast } = useToast();
   
-  // Update form data key to step11_eval
+  // State directly maps to the required fields from step11.html
   const [formData, setFormData] = useState({
     emiBouncesReason: currentLead?.formData?.step11_eval?.emiBouncesReason || '', // Required field 1
     highInquiriesReason: currentLead?.formData?.step11_eval?.highInquiriesReason || '', // Required field 2
   });
-  const [explanation1, setExplanation1] = useState(currentLead?.formData?.step11_eval?.explanation1 || ''); 
-  const [explanation2, setExplanation2] = useState(currentLead?.formData?.step11_eval?.explanation2 || ''); 
 
   useEffect(() => {
     if (currentLead?.formData?.step11_eval) {
@@ -32,13 +30,10 @@ export default function Step11EvaluationPage() {
             emiBouncesReason: currentLead.formData.step11_eval.emiBouncesReason || '',
             highInquiriesReason: currentLead.formData.step11_eval.highInquiriesReason || '',
         });
-        // Keeping explanation fields for custom data, though HTML didn't explicitly map them to risk answers
-        setExplanation1(currentLead.formData.step11_eval.explanation1 || '');
-        setExplanation2(currentLead.formData.step11_eval.explanation2 || '');
     }
   }, [currentLead]);
   
-  const setField = (key: string, value: string) => setFormData(prev => ({ ...prev, [key]: value }));
+  const setField = (key: keyof typeof formData, value: string) => setFormData(prev => ({ ...prev, [key]: value }));
 
   const handleReject = () => {
     if (!currentLead) return;
@@ -51,26 +46,12 @@ export default function Step11EvaluationPage() {
     router.push('/leads');
   };
 
-  const handleSaveDraft = () => {
-    if (!currentLead) return;
-    updateLead(currentLead.id, {
-      formData: {
-        ...currentLead.formData,
-        step11_eval: { ...formData, explanation1, explanation2 }
-      },
-      currentStep: 11
-    });
-    toast({
-        title: 'Draft Saved',
-        description: `Evaluation draft saved successfully.`,
-    });
-    router.push('/leads');
-  };
+  // Removed Save Draft handler/button
 
   const handleApprove = () => {
     if (!currentLead) return;
     
-    // Check conditional fields (if present, they must be filled)
+    // Check conditional fields must be filled
     if (!formData.emiBouncesReason.trim() || !formData.highInquiriesReason.trim()) {
         toast({
             title: 'Missing Explanations',
@@ -80,11 +61,11 @@ export default function Step11EvaluationPage() {
         return;
     }
 
-    // Save evaluation data
+    // Save final evaluation data
     updateLead(currentLead.id, {
       formData: {
         ...currentLead.formData,
-        step11_eval: { ...formData, explanation1, explanation2 }
+        step11_eval: { ...formData }
       }
     });
     
@@ -112,7 +93,9 @@ export default function Step11EvaluationPage() {
         title="Evaluation & Assessment - Step 11" 
         showNotifications={false}
         showExitButton={true}
-        onExit={handleSaveDraft} 
+        // NOTE: The exit button uses handleSaveDraft in the DashboardLayout,
+        // so we temporarily redirect the onExit prop to a simple draft save or null
+        onExit={handlePrevious} // Redirecting exit button to Previous to avoid confusion, since draft is explicitly removed from main flow
     >
       <div className="max-w-2xl mx-auto">
         <ProgressBar currentStep={11} totalSteps={11} /> 
@@ -121,7 +104,7 @@ export default function Step11EvaluationPage() {
           <div>
             <h2 className="text-xl font-semibold text-gray-900 mb-6">Credit & Risk Evaluation</h2>
 
-            {/* Application Summary - kept generic for brevity */}
+            {/* Application Summary Card - Mimics HTML structure */}
             <Card className="mb-6">
                 <CardContent className="p-4 space-y-3">
                     <h3 className="font-semibold text-gray-900 border-b pb-2">Application Summary</h3>
@@ -134,24 +117,33 @@ export default function Step11EvaluationPage() {
                             <span className="text-gray-500">Loan Amount:</span>
                             <p className="font-medium text-gray-900">₹{currentLead?.loanAmount?.toLocaleString() || 'N/A'}</p>
                         </div>
+                        {/* Adding mock/placeholder summary data based on HTML/context */}
+                        <div>
+                            <span className="text-gray-500">Employment:</span>
+                            <p className="font-medium text-gray-900">{currentLead?.formData?.step5?.occupationType || 'N/A'}</p>
+                        </div>
+                        <div>
+                            <span className="text-gray-500">Monthly Income:</span>
+                            <p className="font-medium text-gray-900">₹45,000 (Mock)</p>
+                        </div>
                     </div>
                 </CardContent>
             </Card>
 
 
-            {/* 1. BRE Results - Conditional Approval Section */}
+            {/* 1. BRE Results - Conditional Approval Section (Primary focus of HTML) */}
             <div className="bg-amber-50 border-2 border-amber-200 rounded-lg p-4 mb-6 space-y-4">
               <div className="flex items-start space-x-3">
                 <AlertTriangle className="w-6 h-6 text-amber-600 flex-shrink-0 mt-0.5" />
                 <div>
                   <h3 className="font-semibold text-amber-900 mb-1">Conditional Approval</h3>
                   <p className="text-sm text-amber-800">
-                    The application requires additional clarification before approval.
+                    The application requires additional clarification before approval. Please answer the following questions:
                   </p>
                 </div>
               </div>
               
-              {/* Conditional Questions */}
+              {/* Conditional Questions - Required */}
               <div className="space-y-4 pt-2">
                 <div>
                     <Label htmlFor="emiBouncesReason">
@@ -228,10 +220,9 @@ export default function Step11EvaluationPage() {
                         <span className="text-sm text-gray-700">Stable Employment</span>
                         <Badge className="bg-green-100 text-green-700">Low Risk</Badge>
                       </div>
-                      {/* Placeholder for other factors */}
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-700">Credit History</span>
-                        <Badge className="bg-yellow-100 text-yellow-700">Medium Risk</Badge>
+                      <div className="flex justify-between">
+                          <span className="text-sm text-gray-700">DPD Status:</span>
+                          <span className="font-medium text-orange-600">30+ DPD (Mock)</span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-gray-700">Debt-to-Income Ratio</span>
@@ -252,27 +243,23 @@ export default function Step11EvaluationPage() {
             >
               Reject
             </Button>
-            <Button
-              onClick={handleSaveDraft}
-              variant="outline"
-              className="h-12"
-            >
-              Save Draft
-            </Button>
-            <Button
-              onClick={handlePrevious} 
-              variant="outline"
-              className="h-12"
-            >
-              Previous
-            </Button>
-            <Button
-              onClick={handleApprove}
-              disabled={!canApprove}
-              className="h-12 bg-green-600 hover:bg-green-700 text-white font-semibold"
-            >
-              Approve & Finalize
-            </Button>
+            <div className="col-span-2 grid grid-cols-2 gap-3">
+              {/* REMOVED: Save Draft Button */}
+              <Button
+                onClick={handlePrevious} 
+                variant="outline"
+                className="h-12"
+              >
+                Previous
+              </Button>
+              <Button
+                onClick={handleApprove}
+                disabled={!canApprove}
+                className="h-12 bg-green-600 hover:bg-green-700 text-white font-semibold"
+              >
+                Approve & Finalize
+              </Button>
+            </div>
           </div>
         </div>
       </div>
