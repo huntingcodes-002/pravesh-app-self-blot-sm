@@ -81,7 +81,7 @@ export default function Step6Page() {
 
   return (
     <DashboardLayout 
-        title="Co-Applicant Details - Step 6" 
+        title="Co-Applicant Details" 
         showNotifications={false}
         showExitButton={true} 
         onExit={handleExit}

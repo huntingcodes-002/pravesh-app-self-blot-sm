@@ -91,7 +91,7 @@ export default function Step8Page() {
 
   return (
     <DashboardLayout 
-        title="Loan Details & Requirements - Step 8" 
+        title="Loan Details & Requirements" 
         showNotifications={false}
         showExitButton={true} 
         onExit={handleExit}

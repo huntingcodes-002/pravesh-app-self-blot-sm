@@ -64,7 +64,7 @@ export default function Step1Page() {
 
   return (
     <DashboardLayout 
-        title="New Lead Application - Step 1" 
+        title="New Lead Application" 
         showNotifications={false}
         showExitButton={true} 
         onExit={handleExit} 

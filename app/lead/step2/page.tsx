@@ -124,7 +124,7 @@ export default function Step2Page() {
 
   return (
     <DashboardLayout 
-        title="Primary Customer - Consent - Step 2" 
+        title="Primary Customer - Consent" 
         showNotifications={false}
         showExitButton={true} 
         onExit={handleExit} 

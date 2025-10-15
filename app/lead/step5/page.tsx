@@ -76,7 +76,7 @@ export default function Step5Page() {
 
   return (
     <DashboardLayout 
-        title="Employment Details - Step 5" 
+        title="Employment Details" 
         showNotifications={false}
         showExitButton={true}
         onExit={handleExit}

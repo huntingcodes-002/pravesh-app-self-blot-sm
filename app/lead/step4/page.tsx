@@ -80,7 +80,7 @@ export default function Step4Page() {
 
   return (
     <DashboardLayout 
-        title="Address Details - Step 4" 
+        title="Address Details" 
         showNotifications={false}
         showExitButton={true} 
         onExit={handleExit} 

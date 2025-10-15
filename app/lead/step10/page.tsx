@@ -234,7 +234,7 @@ export default function Step10Page() {
 
   return (
     <DashboardLayout 
-        title="Document Upload - Step 10" 
+        title="Document Upload" 
         showNotifications={false}
         showExitButton={true} 
         onExit={handleExit} 
@@ -260,8 +260,8 @@ export default function Step10Page() {
                   </SelectTrigger>
                   <SelectContent>
                     {/* Updated Document Type options from HTML */}
-                    <SelectItem value="PAN">Raj Kumar Sharma – PAN</SelectItem>
-                    <SelectItem value="Adhaar">Raj Kumar Sharma – Aadhaar</SelectItem>
+                    <SelectItem value="PAN">PAN</SelectItem>
+                    <SelectItem value="Adhaar">Aadhaar</SelectItem>
                     <SelectItem value="CollateralProperty">Collateral – Ownership Proof</SelectItem>
                     <SelectItem value="CollateralPhotos">Collateral – Property Photos (Geo required)</SelectItem>
                     <SelectItem value="BankStatement">Income – Bank Statement</SelectItem>

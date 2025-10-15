@@ -68,7 +68,7 @@ export default function Step7Page() {
 
   return (
     <DashboardLayout 
-        title="Collateral Details - Step 7" 
+        title="Collateral Details" 
         showNotifications={false}
         showExitButton={true} 
         onExit={handleExit}

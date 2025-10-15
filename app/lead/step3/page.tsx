@@ -127,7 +127,7 @@ export default function Step3Page() {
 
   return (
     <DashboardLayout 
-        title="Personal Details - Step 3" 
+        title="Personal Details" 
         showNotifications={false}
         showExitButton={true} 
         onExit={handleExit} 

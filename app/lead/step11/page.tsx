@@ -90,7 +90,7 @@ export default function Step11EvaluationPage() {
 
   return (
     <DashboardLayout 
-        title="Evaluation & Assessment - Step 11" 
+        title="Evaluation & Assessment" 
         showNotifications={false}
         showExitButton={true}
         // NOTE: The exit button uses handleSaveDraft in the DashboardLayout,
@@ -235,32 +235,40 @@ export default function Step11EvaluationPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 pt-4">
+          <div className="grid grid-cols-3 gap-4 pt-4">
+            {/* Reject Button */}
             <Button
               onClick={handleReject}
               variant="outline"
-              className="h-12 border-red-200 text-red-600 hover:bg-red-50"
+              className="h-auto min-h-12 border-red-300 text-red-600 hover:bg-red-50 font-semibold rounded-xl shadow-sm hover:shadow transition-all duration-150 text-center"
             >
               Reject
             </Button>
-            <div className="col-span-2 grid grid-cols-2 gap-3">
-              {/* REMOVED: Save Draft Button */}
-              <Button
-                onClick={handlePrevious} 
-                variant="outline"
-                className="h-12"
-              >
-                Previous
-              </Button>
-              <Button
-                onClick={handleApprove}
-                disabled={!canApprove}
-                className="h-12 bg-green-600 hover:bg-green-700 text-white font-semibold"
-              >
-                Approve & Finalize
-              </Button>
-            </div>
+
+            {/* Previous Button */}
+            <Button
+              onClick={handlePrevious}
+              variant="outline"
+              className="h-auto min-h-12 border-gray-300 text-gray-700 hover:bg-gray-100 font-semibold rounded-xl shadow-sm hover:shadow transition-all duration-150 text-center"
+            >
+              Previous
+            </Button>
+
+            {/* Approve Button */}
+            <Button
+              onClick={handleApprove}
+              disabled={!canApprove}
+              className={`h-auto min-h-12 font-semibold text-white rounded-xl shadow-md transition-all duration-200 text-center ${
+                canApprove
+                  ? "bg-green-600 hover:bg-green-700 hover:shadow-lg hover:scale-[1.02]"
+                  : "bg-gray-300 cursor-not-allowed"
+              }`}
+            >
+              Approve & Finalize
+            </Button>
           </div>
+
+
         </div>
       </div>
     </DashboardLayout>

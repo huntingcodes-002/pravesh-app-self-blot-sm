@@ -70,7 +70,7 @@ export default function Step9Page() {
 
   return (
     <DashboardLayout 
-        title="Review Application - Step 9" 
+        title="Review Application" 
         showNotifications={false}
         showExitButton={true} 
         onExit={handleExit} 
