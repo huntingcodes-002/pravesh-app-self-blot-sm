@@ -11,6 +11,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, Info } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+
 
 export default function Step1Page() {
   const { currentLead, updateLead } = useLead();
@@ -57,7 +59,16 @@ export default function Step1Page() {
             <div>
               <Label htmlFor="productType" className="flex items-center space-x-1">
                 <span>Product Type</span> <span className="text-red-500">*</span>
-                <Info className="w-3 h-3 text-gray-500" title="Select loan security type."/>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="w-3 h-3 text-gray-500" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Select loan security type.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </Label>
               <Select
                 value={formData.productType}
