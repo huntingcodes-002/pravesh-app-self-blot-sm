@@ -1,9 +1,13 @@
+
 'use client';
 
 import React, { useState } from 'react';
-import { Menu, Bell, X } from 'lucide-react'; // Removed TrendingUp
+import { Menu, Bell, X } from 'lucide-react';
 import Sidebar from './Sidebar';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLead } from '@/contexts/LeadContext';
+import { useRouter } from 'next/navigation';
+
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -24,8 +28,23 @@ export default function DashboardLayout({
 }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user } = useAuth();
-  
-  // Removed handleOpenStatusUpdate since it is now accessed via Sidebar/dedicated page
+  const { currentLead, deleteLead } = useLead();
+  const router = useRouter();
+
+  const handleExit = () => {
+    if (onExit) {
+      onExit();
+    } else if (currentLead) {
+      // Default exit behavior
+      if (!currentLead.customerName && !currentLead.customerMobile) {
+        deleteLead(currentLead.id);
+      }
+      router.push('/leads');
+    } else {
+        router.push('/leads');
+    }
+  };
+
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -44,11 +63,9 @@ export default function DashboardLayout({
           </div>
 
           <div className="flex items-center space-x-4">
-             {/* Removed "Update Status" button from header */}
-
-            {showExitButton && onExit && (
+            {showExitButton && (
                 <button
-                    onClick={onExit}
+                    onClick={handleExit}
                     className="p-2 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-200"
                     title="Exit and Save Draft"
                 >

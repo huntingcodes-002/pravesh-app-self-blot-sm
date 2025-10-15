@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
@@ -19,7 +20,7 @@ export interface Lead {
   gender?: string;
   loanAmount?: number;
   loanPurpose?: string;
-  currentStep: number; // Max step is now 9 (was 10)
+  currentStep: number;
   formData: any;
   createdAt: string;
   updatedAt: string;
@@ -31,8 +32,9 @@ interface LeadContextType {
   createLead: () => void;
   updateLead: (leadId: string, data: Partial<Lead>) => void;
   submitLead: (leadId: string) => void;
-  updateLeadStatus: (leadId: string, status: LeadStatus) => void; // New function
+  updateLeadStatus: (leadId: string, status: LeadStatus) => void;
   setCurrentLead: (lead: Lead | null) => void;
+  deleteLead: (leadId: string) => void; // New function
 }
 
 const LeadContext = createContext<LeadContextType | undefined>(undefined);
@@ -48,65 +50,7 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
     if (storedLeads) {
       setLeads(JSON.parse(storedLeads));
     } else {
-      const dummyLeads: Lead[] = [
-        {
-          id: '1',
-          appId: 'APP-2025-001',
-          status: 'Draft',
-          customerName: 'John Doe',
-          customerMobile: '+91 9876543210',
-          currentStep: 3,
-          formData: {},
-          createdAt: '2025-10-10T10:00:00Z',
-          updatedAt: '2025-10-12T14:30:00Z'
-        },
-        {
-          id: '2',
-          appId: 'APP-2025-002',
-          status: 'Submitted',
-          customerName: 'Jane Smith',
-          customerMobile: '+91 9876543211',
-          currentStep: 10, // Max step
-          formData: {},
-          createdAt: '2025-10-09T09:00:00Z',
-          updatedAt: '2025-10-11T16:45:00Z'
-        },
-        {
-          id: '3',
-          appId: 'APP-2025-003',
-          status: 'Approved',
-          customerName: 'Robert Johnson',
-          customerMobile: '+91 9876543212',
-          currentStep: 10,
-          formData: {},
-          createdAt: '2025-10-08T11:00:00Z',
-          updatedAt: '2025-10-10T10:20:00Z'
-        },
-        {
-          id: '4',
-          appId: 'APP-2025-004',
-          status: 'Draft',
-          customerName: 'Maria Garcia',
-          customerMobile: '+91 9876543213',
-          currentStep: 5,
-          formData: {},
-          createdAt: '2025-10-11T13:00:00Z',
-          updatedAt: '2025-10-13T09:15:00Z'
-        },
-        {
-          id: '5',
-          appId: 'APP-2025-005',
-          status: 'Disbursed',
-          customerName: 'Michael Brown',
-          customerMobile: '+91 9876543214',
-          currentStep: 10,
-          formData: {},
-          createdAt: '2025-10-05T08:00:00Z',
-          updatedAt: '2025-10-08T12:00:00Z'
-        }
-      ];
-      setLeads(dummyLeads);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(dummyLeads));
+      // Dummy data initialization
     }
   }, []);
 
@@ -161,7 +105,6 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
     saveLeads(updatedLeads);
   };
 
-  // New function for status update (Requirement 6)
   const updateLeadStatus = (leadId: string, status: LeadStatus) => {
     const updatedLeads = leads.map(lead =>
       lead.id === leadId
@@ -169,6 +112,14 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
         : lead
     );
     saveLeads(updatedLeads);
+  };
+  
+  const deleteLead = (leadId: string) => {
+    const updatedLeads = leads.filter(lead => lead.id !== leadId);
+    saveLeads(updatedLeads);
+    if (currentLead?.id === leadId) {
+      setCurrentLead(null);
+    }
   };
 
   return (
@@ -180,7 +131,8 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
         updateLead,
         submitLead,
         updateLeadStatus,
-        setCurrentLead
+        setCurrentLead,
+        deleteLead
       }}
     >
       {children}

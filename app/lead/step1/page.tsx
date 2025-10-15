@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -9,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Info } from 'lucide-react'; // Import necessary icons
+import { Search, Info } from 'lucide-react';
 
 export default function Step1Page() {
   const { currentLead, updateLead } = useLead();
@@ -17,47 +18,26 @@ export default function Step1Page() {
   
   const [formData, setFormData] = useState({
     productType: currentLead?.formData?.step1?.productType || '',
-    branchCode: currentLead?.formData?.step1?.branchCode || 'BR001 - Mumbai Central', // Default from HTML
+    branchCode: currentLead?.formData?.step1?.branchCode || 'BR001 - Mumbai Central',
     applicationType: currentLead?.formData?.step1?.applicationType || 'new',
   });
 
+  // Autosave form data on change, but DO NOT update the currentStep here
   useEffect(() => {
-    if (currentLead?.formData?.step1) {
-      setFormData(prev => ({
-        ...prev,
-        productType: currentLead.formData.step1.productType,
-        branchCode: currentLead.formData.step1.branchCode,
-        applicationType: currentLead.formData.step1.applicationType,
-      }));
+    if (currentLead) {
+        updateLead(currentLead.id, {
+            formData: { ...currentLead.formData, step1: formData },
+        });
     }
-  }, [currentLead]);
+  }, [formData]);
 
   const handleNext = () => {
     if (!currentLead) return;
+    // Update the currentStep ONLY when the user clicks Next
     updateLead(currentLead.id, {
-      formData: {
-        ...currentLead.formData,
-        step1: formData
-      },
       currentStep: 2
     });
     router.push('/lead/step2');
-  };
-
-  const handleExit = () => {
-    if (!currentLead) {
-        router.push('/leads');
-        return;
-    }
-    // Save current data as draft before exiting
-    updateLead(currentLead.id, {
-      formData: {
-        ...currentLead.formData,
-        step1: formData
-      },
-      currentStep: 1 // Stay on current step index for resuming
-    });
-    router.push('/leads');
   };
 
   const canProceed = formData.productType && formData.branchCode;
@@ -67,17 +47,13 @@ export default function Step1Page() {
         title="New Lead Application" 
         showNotifications={false}
         showExitButton={true} 
-        onExit={handleExit} 
     >
       <div className="max-w-2xl mx-auto">
         <ProgressBar currentStep={1} totalSteps={11} />
 
         <div className="bg-white rounded-xl shadow-sm p-6 space-y-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-6">Application Details</h2>
-
           <div className="space-y-4">
-            
-            {/* 1. Product Type Field */}
             <div>
               <Label htmlFor="productType" className="flex items-center space-x-1">
                 <span>Product Type</span> <span className="text-red-500">*</span>
@@ -96,8 +72,6 @@ export default function Step1Page() {
                 </SelectContent>
               </Select>
             </div>
-
-            {/* 2. Branch Code Field */}
             <div>
               <Label htmlFor="branchCode">Branch Code</Label>
               <div className="relative">
@@ -114,8 +88,6 @@ export default function Step1Page() {
               </div>
               <p className="text-xs text-gray-500 mt-1">Auto-populated with your default branch</p>
             </div>
-
-            {/* 3. Application Type Field */}
             <div>
               <Label htmlFor="applicationType">Application Type</Label>
               <Select
@@ -134,7 +106,6 @@ export default function Step1Page() {
               </Select>
             </div>
           </div>
-
           <div className="flex justify-end pt-4">
             <Button
               onClick={handleNext}
