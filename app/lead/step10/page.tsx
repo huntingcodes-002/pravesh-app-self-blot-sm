@@ -1,17 +1,18 @@
+
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Upload, CheckCircle, XCircle, Loader, Trash2, RotateCcw, Camera } from 'lucide-react'; // Added Camera icon
+import { Upload, CheckCircle, XCircle, Loader, Trash2, RotateCcw, Camera } from 'lucide-react';
 import DashboardLayout from '@/components/DashboardLayout';
-import ProgressBar from '@/components/ProgressBar'; 
+import ProgressBar from '@/components/ProgressBar';
 import { useLead } from '@/contexts/LeadContext';
 import { validateFile } from '@/lib/mock-auth';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input'; 
+import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 
 interface UploadedFile {
@@ -20,17 +21,30 @@ interface UploadedFile {
   type: string;
   status: 'Processing' | 'Success' | 'Failed';
   error?: string;
-  remark?: string; 
+  remark?: string;
 }
 
-export default function Step10Page() { 
-  const { currentLead, updateLead, submitLead } = useLead();
+export default function Step10Page() {
+  const { currentLead, updateLead } = useLead();
   const router = useRouter();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const [documentType, setDocumentType] = useState('');
-  const [documentRemark, setDocumentRemark] = useState(''); 
-  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>(currentLead?.formData?.step10?.files || []); 
+  const [documentRemark, setDocumentRemark] = useState('');
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>(
+    currentLead?.formData?.step10?.files || []
+  );
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [stream, setStream] = useState<MediaStream | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [stream]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -38,7 +52,7 @@ export default function Step10Page() {
       toast({
         title: 'Error',
         description: 'Please select a document type first',
-        variant: 'destructive'
+        variant: 'destructive',
       });
       return;
     }
@@ -54,19 +68,19 @@ export default function Step10Page() {
       remark: documentRemark,
     };
 
-    setUploadedFiles(prev => [...prev, newFile]);
+    setUploadedFiles((prev) => [...prev, newFile]);
     toast({ title: 'Processing', description: `Uploading ${file.name}...` });
 
     setTimeout(() => {
       const validation = validateFile(file.name);
 
-      setUploadedFiles(prev =>
-        prev.map(f =>
+      setUploadedFiles((prev) =>
+        prev.map((f) =>
           f.id === fileId
             ? {
                 ...f,
                 status: validation.valid ? 'Success' : 'Failed',
-                error: validation.error
+                error: validation.error,
               }
             : f
         )
@@ -76,13 +90,13 @@ export default function Step10Page() {
         toast({
           title: 'Success',
           description: `${file.name} uploaded successfully`,
-          className: 'bg-green-50 border-green-200'
+          className: 'bg-green-50 border-green-200',
         });
       } else {
         toast({
           title: 'Failed',
           description: validation.error || 'File validation failed',
-          variant: 'destructive'
+          variant: 'destructive',
         });
       }
     }, 1500);
@@ -90,98 +104,99 @@ export default function Step10Page() {
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
-    // Clear remark and document type after selection
     setDocumentRemark('');
     setDocumentType('');
   };
 
-  // NEW: Mock Camera/Capture Logic based on HTML
-  const handleCaptureFromCamera = () => {
+  const startCamera = async () => {
     if (!documentType) {
-      toast({
-        title: 'Error',
-        description: 'Please select a document type first',
-        variant: 'destructive'
-      });
-      return;
+        toast({
+            title: 'Error',
+            description: 'Please select a document type first',
+            variant: 'destructive'
+        });
+        return;
     }
     
-    // In a real app, this would request camera access and trigger image capture.
-    // Here we simulate a successful capture/upload flow.
-    const mockFileName = `capture_${Date.now()}.jpg`;
-    
-    const newFile: UploadedFile = {
-      id: Date.now().toString(),
-      name: mockFileName,
-      type: documentType,
-      status: 'Processing',
-      remark: documentRemark,
-    };
-    setUploadedFiles(prev => [...prev, newFile]);
-    toast({ title: 'Capturing...', description: `Camera capture initiated for ${documentType}...` });
-
-    setTimeout(() => {
-        const validation = validateFile(mockFileName);
-        
-        setUploadedFiles(prev =>
-            prev.map(f =>
-            f.id === newFile.id
-                ? {
-                    ...f,
-                    status: 'Success',
-                    error: undefined // Always successful for mock capture
-                }
-                : f
-            )
-        );
-        toast({
-            title: 'Capture Successful',
-            description: `${documentType} captured and uploaded.`,
-            className: 'bg-green-50 border-green-200'
-        });
-        setDocumentRemark('');
-        setDocumentType('');
-    }, 1500);
+    try {
+      const mediaStream = await navigator.mediaDevices.getUserMedia({ video: true });
+      setStream(mediaStream);
+      setIsCameraOpen(true);
+      if (videoRef.current) {
+        videoRef.current.srcObject = mediaStream;
+      }
+    } catch (err) {
+      console.error("Error accessing camera: ", err);
+      toast({
+        title: 'Camera Error',
+        description: 'Could not access the camera. Please check permissions.',
+        variant: 'destructive'
+      });
+    }
   };
   
+  const captureImage = () => {
+    if (videoRef.current) {
+        const canvas = document.createElement('canvas');
+        canvas.width = videoRef.current.videoWidth;
+        canvas.height = videoRef.current.videoHeight;
+        const context = canvas.getContext('2d');
+        if (context) {
+            context.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+            const dataUrl = canvas.toDataURL('image/jpeg');
+
+            const fileId = Date.now().toString();
+            const newFile: UploadedFile = {
+              id: fileId,
+              name: `capture_${fileId}.jpg`,
+              type: documentType,
+              status: 'Success', 
+              remark: documentRemark,
+            };
+
+            setUploadedFiles((prev) => [...prev, newFile]);
+            toast({
+              title: 'Success',
+              description: `${newFile.name} captured and uploaded.`,
+              className: 'bg-green-50 border-green-200',
+            });
+        }
+        
+        stopCamera();
+    }
+  };
+  
+   const stopCamera = () => {
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+    }
+    setStream(null);
+    setIsCameraOpen(false);
+  };
 
   const handleRetry = (fileId: string) => {
-    setUploadedFiles(prev =>
-      prev.map(f => (f.id === fileId ? { ...f, status: 'Processing' as const, error: undefined } : f))
+    setUploadedFiles((prev) =>
+      prev.map((f) => (f.id === fileId ? { ...f, status: 'Processing' as const, error: undefined } : f))
     );
 
     setTimeout(() => {
-      // Mock successful retry
-      setUploadedFiles(prev =>
-        prev.map(f => (f.id === fileId ? { ...f, status: 'Success' as const, error: undefined } : f))
+      setUploadedFiles((prev) =>
+        prev.map((f) => (f.id === fileId ? { ...f, status: 'Success' as const, error: undefined } : f))
       );
       toast({
         title: 'Success',
         description: 'File re-uploaded successfully',
-        className: 'bg-green-50 border-green-200'
+        className: 'bg-green-50 border-green-200',
       });
     }, 1000);
   };
 
   const handleDelete = (fileId: string) => {
-    setUploadedFiles(uploadedFiles.filter(f => f.id !== fileId));
+    setUploadedFiles(uploadedFiles.filter((f) => f.id !== fileId));
   };
-
-  // Renamed from SubmitWithoutDocs to ContinueWithoutDocs
-  const handleContinueWithoutDocs = () => { 
-    if (!currentLead) return;
-    updateLead(currentLead.id, {
-      formData: {
-        ...currentLead.formData,
-        step10: { files: uploadedFiles }
-      },
-      currentStep: 11 
-    });
-    router.push('/lead/step11'); 
-  };
-
+  
   const handleSaveAndContinue = () => {
-    const requiredTypes = ['PAN', 'Adhaar', 'BankStatement', 'CollateralProperty'];
+    const requiredTypes = ['PAN', 'Adhaar', 'BankStatement', 'CollateralProperty', 'CollateralPhotos'];
     const successFiles = uploadedFiles.filter(f => f.status === 'Success');
     
     const hasAllRequired = requiredTypes.every(type =>
@@ -191,7 +206,7 @@ export default function Step10Page() {
     if (!hasAllRequired) {
       toast({
         title: 'Validation Failed',
-        description: 'All 4 required documents (PAN, Adhaar, Bank Statement, Collateral Property) must be successfully uploaded',
+        description: 'All 5 required documents must be successfully uploaded',
         variant: 'destructive'
       });
       return;
@@ -206,52 +221,71 @@ export default function Step10Page() {
       currentStep: 11 
     });
     
-    // Redirect to the Evaluation page
     router.push('/lead/step11'); 
   };
-
-  const handleExit = () => {
-    if (!currentLead) {
-        router.push('/leads');
-        return;
-    }
-    // Save current data as draft before exiting
+  
+  const handleContinueWithoutDocs = () => { 
+    if (!currentLead) return;
     updateLead(currentLead.id, {
       formData: {
         ...currentLead.formData,
         step10: { files: uploadedFiles }
       },
-      currentStep: 10
+      currentStep: 11 
+    });
+    router.push('/lead/step11'); 
+  };
+
+
+  const handleExit = () => {
+    if (!currentLead) {
+      router.push('/leads');
+      return;
+    }
+    updateLead(currentLead.id, {
+      formData: {
+        ...currentLead.formData,
+        step10: { files: uploadedFiles },
+      },
+      currentStep: 10,
     });
     router.push('/leads');
   };
-  
+
   const handlePrevious = () => {
-    // Navigate back to the Review page (Step 9)
-    router.push('/lead/step9'); 
+    router.push('/lead/step9');
   };
 
-
   return (
-    <DashboardLayout 
-        title="Document Upload" 
-        showNotifications={false}
-        showExitButton={true} 
-        onExit={handleExit} 
+    <DashboardLayout
+      title="Document Upload"
+      showNotifications={false}
+      showExitButton={true}
+      onExit={handleExit}
     >
       <div className="max-w-2xl mx-auto">
         <ProgressBar currentStep={10} totalSteps={11} />
 
+        {isCameraOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-75 z-50 flex flex-col items-center justify-center">
+            <video ref={videoRef} autoPlay className="w-full max-w-md h-auto" />
+            <div className="flex space-x-4 mt-4">
+                <Button onClick={captureImage} className="bg-green-600 hover:bg-green-700">Capture</Button>
+                <Button onClick={stopCamera} variant="destructive">Cancel</Button>
+            </div>
+          </div>
+        )}
+
         <div className="bg-white rounded-xl shadow-sm p-6 space-y-6">
           <div className="mb-4">
-             <p className="text-sm text-gray-500 text-center">Upload documents for this lead if available. This step is optional but recommended for faster processing.</p>
+            <p className="text-sm text-gray-500 text-center">
+              Upload documents for this lead if available. This step is optional but recommended for faster processing.
+            </p>
           </div>
           <div>
             <h2 className="text-xl font-semibold text-gray-900 mb-6">KYC Documents</h2>
 
             <div className="space-y-4">
-              
-              {/* 1. Document Type Selection */}
               <div>
                 <Label htmlFor="documentType">Select Document Type</Label>
                 <Select value={documentType} onValueChange={setDocumentType}>
@@ -259,71 +293,66 @@ export default function Step10Page() {
                     <SelectValue placeholder="Choose document type..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {/* Updated Document Type options from HTML */}
                     <SelectItem value="PAN">PAN</SelectItem>
                     <SelectItem value="Adhaar">Aadhaar</SelectItem>
+                    <SelectItem value="BankStatement">Income – Bank Statement</SelectItem>
                     <SelectItem value="CollateralProperty">Collateral – Ownership Proof</SelectItem>
                     <SelectItem value="CollateralPhotos">Collateral – Property Photos (Geo required)</SelectItem>
-                    <SelectItem value="BankStatement">Income – Bank Statement</SelectItem>
                     <SelectItem value="BusinessGST">Business – GST Certificate</SelectItem>
                     <SelectItem value="Other">Other Document</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
-              {/* 2. Optional Remark Field */}
               {documentType && (
                 <div>
-                    <Label htmlFor="documentRemark">Add Note (Optional)</Label>
-                    <Input
-                        id="documentRemark"
-                        type="text"
-                        value={documentRemark}
-                        onChange={(e) => setDocumentRemark(e.target.value)}
-                        placeholder="e.g., Old GST, expires this year"
-                        className="h-10"
-                    />
+                  <Label htmlFor="documentRemark">Add Note (Optional)</Label>
+                  <Input
+                    id="documentRemark"
+                    type="text"
+                    value={documentRemark}
+                    onChange={(e) => setDocumentRemark(e.target.value)}
+                    placeholder="e.g., Old GST, expires this year"
+                    className="h-10"
+                  />
                 </div>
               )}
 
-              {/* Upload Method Selection (Mimicking HTML buttons) */}
               {documentType && (
-                  <div className="space-y-2">
-                    <h3 className="text-sm font-medium text-gray-900 mb-2">Choose Upload Method</h3>
-                    <div className="grid grid-cols-2 gap-3">
-                        <Button
-                            onClick={handleCaptureFromCamera}
-                            variant="outline"
-                            className="flex flex-col items-center justify-center h-20 space-y-1 border-2 border-blue-300 hover:bg-blue-50"
-                        >
-                            <Camera className="w-6 h-6 text-blue-600" />
-                            <span className="text-xs font-medium text-center">Capture from Camera</span>
-                        </Button>
-                        <Button
-                            onClick={() => fileInputRef.current?.click()}
-                            variant="outline"
-                            className="flex flex-col items-center justify-center h-20 space-y-1 border-2 border-blue-300 hover:bg-blue-50"
-                        >
-                            <Upload className="w-6 h-6 text-blue-600" />
-                            <span className="text-xs font-medium text-center">Select from Files</span>
-                        </Button>
-                    </div>
+                <div className="space-y-2">
+                  <h3 className="text-sm font-medium text-gray-900 mb-2">Choose Upload Method</h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Button
+                      onClick={startCamera}
+                      variant="outline"
+                      className="flex flex-col items-center justify-center h-20 space-y-1 border-2 border-blue-300 hover:bg-blue-50"
+                    >
+                      <Camera className="w-6 h-6 text-blue-600" />
+                      <span className="text-xs font-medium text-center">Capture from Camera</span>
+                    </Button>
+                    <Button
+                      onClick={() => fileInputRef.current?.click()}
+                      variant="outline"
+                      className="flex flex-col items-center justify-center h-20 space-y-1 border-2 border-blue-300 hover:bg-blue-50"
+                    >
+                      <Upload className="w-6 h-6 text-blue-600" />
+                      <span className="text-xs font-medium text-center">Select from Files</span>
+                    </Button>
                   </div>
+                </div>
               )}
-              
-              {/* Hidden File Input */}
+
               <input
-                  ref={fileInputRef}
-                  type="file"
-                  className="hidden"
-                  onChange={handleFileSelect}
-                  accept=".jpg,.jpeg,.png,.pdf"
-                  multiple
+                ref={fileInputRef}
+                type="file"
+                className="hidden"
+                onChange={handleFileSelect}
+                accept=".jpg,.jpeg,.png,.pdf"
               />
 
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
                 <p className="font-semibold mb-1">Valid filenames for demo:</p>
-                <p>pan.jpg, adhaar.jpg, bankStm.pdf, colProp.jpg</p>
+                <p>pan.jpg, adhaar.jpg, bankStm.pdf, colOwn.jpg, colPic.jpg</p>
               </div>
 
               {uploadedFiles.length > 0 && (
@@ -378,29 +407,23 @@ export default function Step10Page() {
           </div>
 
           <div className="flex justify-between pt-4">
-            <Button
-              onClick={handlePrevious}
-              variant="outline"
-              className="h-12 px-8"
-            >
+            <Button onClick={handlePrevious} variant="outline" className="h-12 px-8">
               Previous
             </Button>
             <div className="grid grid-cols-2 gap-3 flex-1 ml-4">
-                {/* Blue "Continue without Docs" - Renamed from Submit without Docs */}
-                <Button
+              <Button
                 onClick={handleContinueWithoutDocs}
                 variant="outline"
                 className="h-12 border-blue-600 text-blue-600 hover:bg-blue-50 font-semibold"
-                >
+              >
                 Continue without Docs
-                </Button>
-                {/* Blue "Save & Continue" */}
-                <Button
+              </Button>
+              <Button
                 onClick={handleSaveAndContinue}
                 className="h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold"
-                >
+              >
                 Save & Continue
-                </Button>
+              </Button>
             </div>
           </div>
         </div>

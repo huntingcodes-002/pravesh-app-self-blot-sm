@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState } from 'react';
@@ -17,7 +18,7 @@ export default function Step9Page() {
   const [expandedSections, setExpandedSections] = useState({
     application: true,
     customer: false,
-    loan: false
+    loan: false,
   });
   const [moveToNextStage, setMoveToNextStage] = useState(false);
 
@@ -33,21 +34,20 @@ export default function Step9Page() {
     if (!currentLead) return;
 
     if (moveToNextStage) {
-        updateLead(currentLead.id, {
-            formData: {
-                ...currentLead.formData,
-                step9: { moveToNextStage }
-            },
-            currentStep: 10 // FIX: Route to the Documents Page (Step 10)
-        });
-        // FIX: Route to Documents (Step 10)
-        router.push('/lead/step10'); 
+      updateLead(currentLead.id, {
+        formData: {
+          ...currentLead.formData,
+          step9: { moveToNextStage },
+        },
+        currentStep: 10,
+      });
+      router.push('/lead/step10');
     } else {
-        submitLead(currentLead.id);
-        router.push('/leads'); // Submit without moving to next pipeline step
+      submitLead(currentLead.id);
+      router.push('/leads');
     }
   };
-
+  
   const handleExit = () => {
     if (!currentLead) {
         router.push('/leads');
@@ -64,16 +64,17 @@ export default function Step9Page() {
     router.push('/leads');
   };
 
+
   const handlePrevious = () => {
     router.push('/lead/step8');
   };
 
   return (
-    <DashboardLayout 
-        title="Review Application" 
-        showNotifications={false}
-        showExitButton={true} 
-        onExit={handleExit} 
+    <DashboardLayout
+      title="Review Application"
+      showNotifications={false}
+      showExitButton={true}
+      onExit={handleExit}
     >
       <div className="max-w-2xl mx-auto">
         <ProgressBar currentStep={9} totalSteps={11} />
@@ -89,12 +90,22 @@ export default function Step9Page() {
                     className="flex items-center justify-between cursor-pointer"
                     onClick={() => toggleSection('application')}
                   >
-                    <h3 className="font-semibold text-gray-900">Application Details</h3>
+                    <h3 className="font-semibold text-gray-900">Application Summary</h3>
                     <div className="flex items-center space-x-2">
-                      <button onClick={(e) => { e.stopPropagation(); handleEdit(1); }} className="text-blue-600 hover:text-blue-700">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEdit(1);
+                        }}
+                        className="text-blue-600 hover:text-blue-700"
+                      >
                         <Edit className="w-4 h-4" />
                       </button>
-                      {expandedSections.application ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                      {expandedSections.application ? (
+                        <ChevronUp className="w-5 h-5" />
+                      ) : (
+                        <ChevronDown className="w-5 h-5" />
+                      )}
                     </div>
                   </div>
 
@@ -102,15 +113,29 @@ export default function Step9Page() {
                     <div className="mt-4 space-y-2 text-sm">
                       <div className="flex justify-between">
                         <span className="text-gray-600">Product Type:</span>
-                        <span className="font-medium">{currentLead?.formData?.step1?.productType || 'N/A'}</span>
+                        <span className="font-medium">
+                          {currentLead?.formData?.step1?.productType || 'N/A'}
+                        </span>
+                      </div>
+                       <div className="flex justify-between">
+                        <span className="text-gray-600">Loan Amount:</span>
+                        <span className="font-medium">
+                          {currentLead?.loanAmount
+                            ? `₹${currentLead.loanAmount.toLocaleString()}`
+                            : 'N/A'}
+                        </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-600">Branch Code:</span>
-                        <span className="font-medium">{currentLead?.formData?.step1?.branchCode || 'N/A'}</span>
+                        <span className="text-gray-600">Customer Name:</span>
+                        <span className="font-medium">
+                          {currentLead?.customerName || 'N/A'}
+                        </span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Application Type:</span>
-                        <span className="font-medium">{currentLead?.formData?.step1?.applicationType || 'N/A'}</span>
+                       <div className="flex justify-between">
+                        <span className="text-gray-600">Application Ref:</span>
+                        <span className="font-medium">
+                          {currentLead?.appId || 'N/A'}
+                        </span>
                       </div>
                     </div>
                   )}
@@ -125,30 +150,50 @@ export default function Step9Page() {
                   >
                     <h3 className="font-semibold text-gray-900">Customer Information</h3>
                     <div className="flex items-center space-x-2">
-                      <button onClick={(e) => { e.stopPropagation(); handleEdit(2); }} className="text-blue-600 hover:text-blue-700">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEdit(2);
+                        }}
+                        className="text-blue-600 hover:text-blue-700"
+                      >
                         <Edit className="w-4 h-4" />
                       </button>
-                      {expandedSections.customer ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                      {expandedSections.customer ? (
+                        <ChevronUp className="w-5 h-5" />
+                      ) : (
+                        <ChevronDown className="w-5 h-5" />
+                      )}
                     </div>
                   </div>
 
                   {expandedSections.customer && (
                     <div className="mt-4 space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Name:</span>
-                        <span className="font-medium">{currentLead?.customerFirstName} {currentLead?.customerLastName}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Mobile:</span>
-                        <span className="font-medium">{currentLead?.customerMobile || 'N/A'}</span>
+                       <div className="flex justify-between">
+                        <span className="text-gray-600">Mobile Number:</span>
+                        <span className="font-medium">
+                          {currentLead?.customerMobile || 'N/A'}
+                        </span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">PAN:</span>
                         <span className="font-medium">{currentLead?.panNumber || 'N/A'}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-600">DOB:</span>
+                        <span className="text-gray-600">Date of Birth:</span>
                         <span className="font-medium">{currentLead?.dob || 'N/A'}</span>
+                      </div>
+                       <div className="flex justify-between">
+                        <span className="text-gray-600">Employment:</span>
+                        <span className="font-medium">
+                          {currentLead?.formData?.step5?.occupationType || 'N/A'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Address:</span>
+                         <span className="font-medium">
+                            {currentLead?.formData?.step4?.addresses?.[0]?.postalCode ? `${currentLead.formData.step4.addresses[0].postalCode}` : 'N/A'}
+                        </span>
                       </div>
                     </div>
                   )}
@@ -163,22 +208,52 @@ export default function Step9Page() {
                   >
                     <h3 className="font-semibold text-gray-900">Loan Details</h3>
                     <div className="flex items-center space-x-2">
-                      <button onClick={(e) => { e.stopPropagation(); handleEdit(8); }} className="text-blue-600 hover:text-blue-700">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEdit(8);
+                        }}
+                        className="text-blue-600 hover:text-blue-700"
+                      >
                         <Edit className="w-4 h-4" />
                       </button>
-                      {expandedSections.loan ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                      {expandedSections.loan ? (
+                        <ChevronUp className="w-5 h-5" />
+                      ) : (
+                        <ChevronDown className="w-5 h-5" />
+                      )}
                     </div>
                   </div>
 
                   {expandedSections.loan && (
                     <div className="mt-4 space-y-2 text-sm">
                       <div className="flex justify-between">
-                        <span className="text-gray-600">Loan Amount:</span>
-                        <span className="font-medium">₹{currentLead?.loanAmount?.toLocaleString() || 'N/A'}</span>
+                        <span className="text-gray-600">Loan Purpose:</span>
+                        <span className="font-medium">{currentLead?.loanPurpose || 'N/A'}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-600">Purpose:</span>
-                        <span className="font-medium">{currentLead?.loanPurpose || 'N/A'}</span>
+                        <span className="text-gray-600">Product Code:</span>
+                        <span className="font-medium">
+                          {currentLead?.formData?.step8?.productCode || 'N/A'}
+                        </span>
+                      </div>
+                       <div className="flex justify-between">
+                        <span className="text-gray-600">Interest Rate:</span>
+                        <span className="font-medium">
+                           {currentLead?.formData?.step8?.interestRate ? `${currentLead.formData.step8.interestRate}% p.a.` : 'N/A'}
+                        </span>
+                      </div>
+                       <div className="flex justify-between">
+                        <span className="text-gray-600">Tenure:</span>
+                        <span className="font-medium">
+                          {currentLead?.formData?.step8?.tenure ? `${currentLead.formData.step8.tenure} Months` : 'N/A'}
+                        </span>
+                      </div>
+                       <div className="flex justify-between">
+                        <span className="text-gray-600">Application Type:</span>
+                        <span className="font-medium">
+                          {currentLead?.formData?.step1?.applicationType || 'N/A'}
+                        </span>
                       </div>
                     </div>
                   )}
@@ -217,11 +292,7 @@ export default function Step9Page() {
           </div>
 
           <div className="flex justify-between pt-4">
-            <Button
-              onClick={handlePrevious}
-              variant="outline"
-              className="h-12 px-8"
-            >
+            <Button onClick={handlePrevious} variant="outline" className="h-12 px-8">
               Previous
             </Button>
             <Button

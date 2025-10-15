@@ -1,3 +1,4 @@
+
 export const MOCK_USER = {
   email: 'rm1@rm.com',
   password: '12qwaszx',
@@ -14,7 +15,8 @@ export const VALID_FILES = {
   'pan.jpg': 'PAN',
   'adhaar.jpg': 'Adhaar',
   'bankStm.pdf': 'BankStatement',
-  'colProp.jpg': 'CollateralProperty'
+  'colOwn.jpg': 'CollateralProperty',
+  'colPic.jpg': 'CollateralPhotos'
 };
 
 export function validatePAN(pan: string): boolean {
