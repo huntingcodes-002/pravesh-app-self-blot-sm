@@ -1,116 +1,101 @@
-
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Calendar, CheckCircle, AlertTriangle, Info } from 'lucide-react';
 import DashboardLayout from '@/components/DashboardLayout';
 import ProgressBar from '@/components/ProgressBar';
 import { useLead } from '@/contexts/LeadContext';
-import { validatePANDetails, PanValidationResult } from '@/lib/mock-auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar as DatePicker } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
+import { Switch } from '@/components/ui/switch';
+import { Plus, Trash2 } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 
-type ValidationStatus = 'pending' | 'valid' | 'invalid';
+interface Address {
+  id: string;
+  addressType: string;
+  country: string;
+  addressLine1: string;
+  addressLine2: string;
+  addressLine3: string;
+  postalCode: string;
+  isPrimary: boolean;
+}
 
 export default function Step3Page() {
   const { currentLead, updateLead } = useLead();
   const router = useRouter();
-  
-  const [formData, setFormData] = useState({
-    customerType: currentLead?.formData?.step3?.customerType || 'individual',
-    hasPan: currentLead?.formData?.step3?.hasPan || 'yes',
-    pan: currentLead?.panNumber || '',
-    salutation: currentLead?.formData?.step2?.salutation || 'Mr',
-    firstName: currentLead?.customerFirstName || '',
-    lastName: currentLead?.customerLastName || '',
-    dob: currentLead?.dob || '',
-    age: currentLead?.age || 0,
-    gender: currentLead?.gender || 'male',
-    email: currentLead?.formData?.step3?.email || '',
-    nationality: currentLead?.formData?.step3?.nationality || 'India',
-    residentType: currentLead?.formData?.step3?.residentType || 'resident',
-  });
-  
-  const [panValidation, setPanValidation] = useState<{
-    panStatus: ValidationStatus;
-    salutationStatus: ValidationStatus;
-    firstNameStatus: ValidationStatus;
-    lastNameStatus: ValidationStatus;
-  }>({
-    panStatus: 'pending',
-    salutationStatus: 'pending',
-    firstNameStatus: 'pending',
-    lastNameStatus: 'pending',
-  });
+
+  const [addresses, setAddresses] = useState<Address[]>([]);
 
   useEffect(() => {
-    // Sync external fields from context
-    setFormData(prev => ({
-        ...prev,
-        salutation: currentLead?.formData?.step2?.salutation || prev.salutation,
-        pan: currentLead?.panNumber || prev.pan,
-        firstName: currentLead?.customerFirstName || prev.firstName,
-        lastName: currentLead?.customerLastName || prev.lastName,
-        dob: currentLead?.dob || prev.dob,
-        age: currentLead?.age || prev.age,
-        gender: currentLead?.gender || prev.gender,
-    }));
-  }, [currentLead]);
-  
-  // PAN Validation Logic
-  useEffect(() => {
-    if (formData.pan.length === 10) {
-      const result = validatePANDetails(formData.pan, formData.salutation, formData.firstName, formData.lastName);
-      setPanValidation({
-        panStatus: result.panExists ? 'valid' : 'invalid',
-        salutationStatus: result.salutationMatch ? 'valid' : 'invalid',
-        firstNameStatus: result.firstNameMatch ? 'valid' : 'invalid',
-        lastNameStatus: result.lastNameMatch ? 'valid' : 'invalid',
-      });
+    if (currentLead?.formData?.step3?.addresses) {
+      setAddresses(currentLead.formData.step3.addresses);
     } else {
-      setPanValidation({
-        panStatus: 'pending',
-        salutationStatus: 'pending',
-        firstNameStatus: 'pending',
-        lastNameStatus: 'pending',
-      });
+      setAddresses([
+        {
+          id: Date.now().toString(),
+          addressType: 'residential',
+          country: 'India',
+          addressLine1: '',
+          addressLine2: '',
+          addressLine3: '',
+          postalCode: '',
+          isPrimary: true,
+        },
+      ]);
     }
-  }, [formData.pan, formData.salutation, formData.firstName, formData.lastName]);
-  
-  // DOB/Age calculation
-  const handleDateChange = (date: Date | undefined) => {
-    if (date) {
-      const dobString = format(date, 'yyyy-MM-dd');
-      const today = new Date();
-      const birthDate = new Date(dobString);
-      let age = today.getFullYear() - birthDate.getFullYear();
-      const m = today.getMonth() - birthDate.getMonth();
-      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-        age--;
-      }
-      setFormData({ ...formData, dob: dobString, age: age });
+  }, [currentLead]);
+
+  const handleAddAddress = () => {
+    setAddresses([
+      ...addresses,
+      {
+        id: Date.now().toString(),
+        addressType: 'residential',
+        country: 'India',
+        addressLine1: '',
+        addressLine2: '',
+        addressLine3: '',
+        postalCode: '',
+        isPrimary: addresses.length === 0,
+      },
+    ]);
+  };
+
+  const handleRemoveAddress = (id: string) => {
+    const remainingAddresses = addresses.filter((addr) => addr.id !== id);
+    if (remainingAddresses.length > 0 && !remainingAddresses.some(a => a.isPrimary)) {
+        remainingAddresses[0].isPrimary = true;
     }
+    setAddresses(remainingAddresses);
+  };
+
+  const handleAddressChange = (id: string, field: keyof Address, value: any) => {
+    setAddresses(
+      addresses.map((addr) => (addr.id === id ? { ...addr, [field]: value } : addr))
+    );
+  };
+
+  const handleSetPrimary = (id: string) => {
+    setAddresses(
+      addresses.map((addr) => ({
+        ...addr,
+        isPrimary: addr.id === id,
+      }))
+    );
   };
 
   const handleNext = () => {
-    if (!currentLead || (formData.hasPan === 'yes' && panValidation.panStatus !== 'valid') || !formData.dob || !formData.firstName || !formData.lastName || !formData.residentType) return;
+    if (!currentLead) return;
 
     updateLead(currentLead.id, {
-      formData: { ...currentLead.formData, step3: formData },
-      panNumber: formData.hasPan === 'yes' ? formData.pan : undefined,
-      dob: formData.dob,
-      age: formData.age,
-      gender: formData.gender,
-      customerFirstName: formData.firstName,
-      customerLastName: formData.lastName,
+      formData: {
+        ...currentLead.formData,
+        step3: { addresses },
+      },
       currentStep: 4,
     });
     router.push('/lead/step4');
@@ -118,11 +103,14 @@ export default function Step3Page() {
 
   const handleExit = () => {
     if (!currentLead) {
-        router.push('/leads');
-        return;
+      router.push('/leads');
+      return;
     }
     updateLead(currentLead.id, {
-      formData: { ...currentLead.formData, step3: formData },
+      formData: {
+        ...currentLead.formData,
+        step3: { addresses },
+      },
       currentStep: 3,
     });
     router.push('/leads');
@@ -132,167 +120,175 @@ export default function Step3Page() {
     router.push('/lead/step2');
   };
 
-  const getValidationIcon = (status: ValidationStatus) => {
-    if (status === 'valid') return <CheckCircle className="w-4 h-4 text-green-500" />;
-    if (status === 'invalid') return <AlertTriangle className="w-4 h-4 text-red-500" />;
-    return null;
-  };
-  
-  const allPanFieldsValid = panValidation.panStatus === 'valid' && panValidation.salutationStatus === 'valid' && panValidation.firstNameStatus === 'valid' && panValidation.lastNameStatus === 'valid';
-  const canProceed = formData.dob && formData.firstName && formData.lastName && formData.residentType && (formData.hasPan === 'no' || allPanFieldsValid);
+  const canProceed = addresses.every(
+    (addr) => addr.addressType && addr.country && addr.addressLine1 && addr.postalCode
+  );
 
   return (
-    <DashboardLayout 
-        title="Personal Details" 
-        showNotifications={false}
-        showExitButton={true} 
-        onExit={handleExit} 
+    <DashboardLayout
+      title="Address Details"
+      showNotifications={false}
+      showExitButton={true}
+      onExit={handleExit}
     >
-      <div className="max-w-2xl mx-auto">
-        <ProgressBar currentStep={3} totalSteps={11} />
+      <div className="max-w-2xl mx-auto pb-24">
+        <ProgressBar currentStep={3} totalSteps={10} />
 
         <div className="bg-white rounded-xl shadow-sm p-6 space-y-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-6">Customer's Personal Information</h2>
+          <h2 className="text-xl font-semibold text-[#003366] mb-6">Address Information</h2>
 
           <div className="space-y-4">
-            <div>
-              <Label>Customer Type</Label>
-              <RadioGroup 
-                value={formData.customerType} 
-                onValueChange={(value) => setFormData({ ...formData, customerType: value })}
-                className="flex space-x-6 mt-2"
-              >
-                <div className="flex items-center space-x-2"><RadioGroupItem value="individual" id="individual" /><Label htmlFor="individual">Individual</Label></div>
-                <div className="flex items-center space-x-2"><RadioGroupItem value="non-individual" id="non-individual" /><Label htmlFor="non-individual">Non-Individual</Label></div>
-              </RadioGroup>
-            </div>
-            
-            <div>
-              <Label>Does the customer have a PAN?</Label>
-              <RadioGroup 
-                value={formData.hasPan} 
-                onValueChange={(value) => setFormData({ ...formData, hasPan: value, pan: (value === 'no' ? '' : formData.pan) })}
-                className="flex space-x-6 mt-2"
-              >
-                <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id="pan-yes" /><Label htmlFor="pan-yes">Yes</Label></div>
-                <div className="flex items-center space-x-2"><RadioGroupItem value="no" id="pan-no" /><Label htmlFor="pan-no">No</Label></div>
-              </RadioGroup>
-            </div>
-
-            {formData.hasPan === 'yes' && (
-              <div>
-                <Label htmlFor="pan">PAN <span className="text-red-500">*</span></Label>
-                <div className="relative">
-                  <Input
-                    id="pan"
-                    value={formData.pan}
-                    onChange={(e) => setFormData({ ...formData, pan: e.target.value.toUpperCase() })}
-                    placeholder="Enter 10-digit PAN"
-                    maxLength={10}
-                    className={cn("h-12 pr-12 uppercase", panValidation.panStatus === 'valid' && 'border-green-500', panValidation.panStatus === 'invalid' && 'border-red-500')}
-                  />
-                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">{getValidationIcon(panValidation.panStatus)}</div>
-                </div>
-                 {panValidation.panStatus === 'invalid' && <p className="text-xs text-red-600 mt-1">PAN not found in mock database.</p>}
-              </div>
-            )}
-            
-            <div>
-              <div className="flex items-center space-x-2 mb-2">
-                <Label htmlFor="salutation">Salutation</Label>
-                {getValidationIcon(panValidation.salutationStatus)}
-              </div>
-              <RadioGroup 
-                value={formData.salutation} 
-                onValueChange={(value) => setFormData({ ...formData, salutation: value })}
-                className="flex space-x-6 mb-4"
-              >
-                <div className="flex items-center space-x-2"><RadioGroupItem value="Mr" id="s-mr" /><Label htmlFor="s-mr">Mr</Label></div>
-                <div className="flex items-center space-x-2"><RadioGroupItem value="Mrs" id="s-mrs" /><Label htmlFor="s-mrs">Mrs</Label></div>
-                <div className="flex items-center space-x-2"><RadioGroupItem value="Ms" id="s-ms" /><Label htmlFor="s-ms">Ms</Label></div>
-              </RadioGroup>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <div className="flex items-center space-x-2 mb-2">
-                    <Label htmlFor="firstName">First Name <span className="text-red-500">*</span></Label>
-                    {getValidationIcon(panValidation.firstNameStatus)}
+            {addresses.map((address, index) => (
+              <Card key={address.id} className="p-4 border-gray-200">
+                <CardContent className="p-0 space-y-4">
+                  <div className="flex justify-between items-center">
+                    <h3 className="font-medium text-lg text-[#003366]">Address {index + 1}</h3>
+                    {addresses.length > 1 && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleRemoveAddress(address.id)}
+                      >
+                        <Trash2 className="h-4 w-4 text-red-500" />
+                      </Button>
+                    )}
                   </div>
-                  <Input id="firstName" value={formData.firstName} onChange={(e) => setFormData({ ...formData, firstName: e.target.value })} placeholder="Enter first name" className="h-12" maxLength={100} />
-                </div>
-                <div>
-                  <div className="flex items-center space-x-2 mb-2">
-                    <Label htmlFor="lastName">Last Name <span className="text-red-500">*</span></Label>
-                    {getValidationIcon(panValidation.lastNameStatus)}
+                  <div>
+                    <Label htmlFor={`addressType-${address.id}`} className="text-sm font-medium text-[#003366] mb-2 block">
+                      Address Type <span className="text-red-500">*</span>
+                    </Label>
+                    <Select
+                      value={address.addressType}
+                      onValueChange={(value) =>
+                        handleAddressChange(address.id, 'addressType', value)
+                      }
+                    >
+                      <SelectTrigger id={`addressType-${address.id}`} className="h-12 rounded-lg">
+                        <SelectValue placeholder="Select address type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="residential">Residential</SelectItem>
+                        <SelectItem value="office">Office</SelectItem>
+                        <SelectItem value="permanent">Permanent</SelectItem>
+                        <SelectItem value="additional">Additional</SelectItem>
+                        <SelectItem value="property">Property</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <Input id="lastName" value={formData.lastName} onChange={(e) => setFormData({ ...formData, lastName: e.target.value })} placeholder="Enter last name" className="h-12" maxLength={50} />
-                </div>
-              </div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="dob">Date of Birth <span className="text-red-500">*</span></Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal h-12", !formData.dob && "text-muted-foreground")}>
-                      <Calendar className="mr-2 h-4 w-4" />
-                      {formData.dob ? format(new Date(formData.dob), "dd/MM/yyyy") : <span>Pick a date</span>}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <DatePicker mode="single" selected={formData.dob ? new Date(formData.dob) : undefined} onSelect={handleDateChange} captionLayout="dropdown" fromYear={1900} toYear={new Date().getFullYear()} />
-                  </PopoverContent>
-                </Popover>
-              </div>
-              <div>
-                <Label htmlFor="age">Age</Label>
-                <Input id="age" type="text" value={formData.age ? `Age: ${formData.age}` : 'Age: XX'} readOnly disabled className="h-12 text-center font-bold bg-blue-50 border-blue-200 text-blue-600" />
-              </div>
-            </div>
+                  <div>
+                    <Label htmlFor={`country-${address.id}`} className="text-sm font-medium text-[#003366] mb-2 block">Country</Label>
+                    <Input
+                      id={`country-${address.id}`}
+                      type="text"
+                      value={address.country}
+                      readOnly
+                      className="h-12 bg-gray-100 rounded-lg"
+                    />
+                  </div>
 
-            <div>
-              <Label>Gender</Label>
-              <RadioGroup value={formData.gender} onValueChange={(value) => setFormData({ ...formData, gender: value })} className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2">
-                <div className="flex items-center space-x-2"><RadioGroupItem value="male" id="g-male" /><Label htmlFor="g-male">Male</Label></div>
-                <div className="flex items-center space-x-2"><RadioGroupItem value="female" id="g-female" /><Label htmlFor="g-female">Female</Label></div>
-                <div className="flex items-center space-x-2"><RadioGroupItem value="third-gender" id="g-third" /><Label htmlFor="g-third">Third Gender</Label></div>
-                <div className="flex items-center space-x-2"><RadioGroupItem value="not-specified" id="g-not" /><Label htmlFor="g-not">Not Specified</Label></div>
-              </RadioGroup>
-            </div>
-            
-            <div>
-              <Label htmlFor="email">Email (Optional)</Label>
-              <Input id="email" type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} placeholder="Enter email address" className="h-12" />
-            </div>
+                  <div>
+                    <Label htmlFor={`addressLine1-${address.id}`} className="text-sm font-medium text-[#003366] mb-2 block">
+                      Address Line 1 <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id={`addressLine1-${address.id}`}
+                      type="text"
+                      value={address.addressLine1}
+                      onChange={(e) =>
+                        handleAddressChange(address.id, 'addressLine1', e.target.value)
+                      }
+                      placeholder="House/Flat No., Building Name"
+                      className="h-12 rounded-lg"
+                      maxLength={255}
+                    />
+                  </div>
 
-            <div>
-              <Label htmlFor="nationality">Nationality</Label>
-              <Select value={formData.nationality} onValueChange={(value) => setFormData({ ...formData, nationality: value })}>
-                <SelectTrigger id="nationality" className="h-12"><SelectValue placeholder="Select Nationality" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="India">India</SelectItem>
-                  <SelectItem value="USA">USA</SelectItem>
-                  <SelectItem value="UK">UK</SelectItem>
-                  <SelectItem value="Canada">Canada</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+                  <div>
+                    <Label htmlFor={`addressLine2-${address.id}`} className="text-sm font-medium text-[#003366] mb-2 block">Address Line 2</Label>
+                    <Input
+                      id={`addressLine2-${address.id}`}
+                      type="text"
+                      value={address.addressLine2}
+                      onChange={(e) =>
+                        handleAddressChange(address.id, 'addressLine2', e.target.value)
+                      }
+                      placeholder="Street Name, Area"
+                      className="h-12 rounded-lg"
+                      maxLength={255}
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor={`addressLine3-${address.id}`} className="text-sm font-medium text-[#003366] mb-2 block">Address Line 3</Label>
+                    <Input
+                      id={`addressLine3-${address.id}`}
+                      type="text"
+                      value={address.addressLine3}
+                      onChange={(e) =>
+                        handleAddressChange(address.id, 'addressLine3', e.target.value)
+                      }
+                      placeholder="Landmark, Additional Info"
+                      className="h-12 rounded-lg"
+                      maxLength={255}
+                    />
+                  </div>
 
-            <div>
-              <Label>Resident Type <span className="text-red-500">*</span></Label>
-              <RadioGroup value={formData.residentType} onValueChange={(value) => setFormData({ ...formData, residentType: value })} className="grid grid-cols-2 gap-x-6 gap-y-2 mt-2">
-                <div className="flex items-center space-x-2"><RadioGroupItem value="resident" id="r-resident" /><Label htmlFor="r-resident">Resident</Label></div>
-                <div className="flex items-center space-x-2"><RadioGroupItem value="non-resident" id="r-non-resident" /><Label htmlFor="r-non-resident">Non-Resident</Label></div>
-                <div className="flex items-center space-x-2"><RadioGroupItem value="indian-origin" id="r-indian-origin" /><Label htmlFor="r-indian-origin">Indian Origin</Label></div>
-              </RadioGroup>
+
+                  <div>
+                    <Label htmlFor={`postalCode-${address.id}`} className="text-sm font-medium text-[#003366] mb-2 block">
+                      Postal Code <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id={`postalCode-${address.id}`}
+                      type="text"
+                      value={address.postalCode}
+                      onChange={(e) => handleAddressChange(address.id, 'postalCode', e.target.value.replace(/[^0-9]/g, ''))}
+                      placeholder="Enter postal code / ZIP"
+                      className="h-12 rounded-lg"
+                      maxLength={6}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border">
+                    <Label
+                      htmlFor={`mark-primary-${address.id}`}
+                      className="text-base font-medium"
+                    >
+                      Mark as Primary Address
+                    </Label>
+                    <Switch
+                      id={`mark-primary-${address.id}`}
+                      checked={address.isPrimary}
+                      onCheckedChange={() => handleSetPrimary(address.id)}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+
+            <div className="pt-4">
+              <Button
+                variant="outline"
+                className="w-full h-12 text-[#0072CE] border-dashed border-[#0072CE]/50 hover:bg-[#E6F0FA] rounded-lg"
+                onClick={handleAddAddress}
+              >
+                <Plus className="w-5 h-5 mr-2" />
+                Add Another Address
+              </Button>
             </div>
           </div>
 
-          <div className="flex justify-between pt-4">
-            <Button onClick={handlePrevious} variant="outline" className="h-12 px-8">Previous</Button>
-            <Button onClick={handleNext} disabled={!canProceed} className="h-12 px-8 bg-blue-600 hover:bg-blue-700 text-white font-semibold">Next</Button>
-          </div>
+        </div>
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] p-4">
+            <div className="flex gap-3 max-w-2xl mx-auto">
+                <Button onClick={handlePrevious} variant="outline" className="flex-1 h-12 rounded-lg">
+                  Previous
+                </Button>
+                <Button onClick={handleNext} disabled={!canProceed} className="flex-1 h-12 rounded-lg bg-[#0072CE] hover:bg-[#005a9e]">
+                  Next
+                </Button>
+            </div>
         </div>
       </div>
     </DashboardLayout>

@@ -2,46 +2,48 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Edit, Trash2 } from 'lucide-react';
 import DashboardLayout from '@/components/DashboardLayout';
 import ProgressBar from '@/components/ProgressBar';
 import { useLead } from '@/contexts/LeadContext';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function Step6Page() {
   const { currentLead, updateLead } = useLead();
   const router = useRouter();
-  // Using an explicit type for mock data structure
-  interface CoApplicant {
-    id: string;
-    firstName: string;
-    lastName: string;
-    relationship: string;
-    gender: string;
-    pan: string;
-    // We omit complex nested form data for mock simplicity here
-  }
-  const [coApplicants, setCoApplicants] = useState<CoApplicant[]>([]);
+  const [formData, setFormData] = useState({
+    collateralType: currentLead?.formData?.step7?.collateralType || '',
+    ownershipType: currentLead?.formData?.step7?.ownershipType || '',
+    currency: currentLead?.formData?.step7?.currency || 'INR', // Added Currency
+    propertyValue: currentLead?.formData?.step7?.propertyValue || '',
+    description: currentLead?.formData?.step7?.description || '',
+    location: currentLead?.formData?.step7?.location || '' // Changed to Input field type (string)
+  });
 
   useEffect(() => {
-    if (currentLead?.formData?.step6) {
-      setCoApplicants(currentLead.formData.step6.coApplicants || []);
+    if (currentLead?.formData?.step7) {
+      setFormData(currentLead.formData.step7);
     }
   }, [currentLead]);
 
-  const handleAddCoApplicant = () => {
-    const newCoApplicant: CoApplicant = {
-      id: Date.now().toString(),
-      firstName: 'Priya', 
-      lastName: 'Sharma', 
-      relationship: 'Spouse', 
-      gender: 'Female',
-      pan: 'ABCDE1234F'
-    };
-    setCoApplicants([...coApplicants, newCoApplicant]);
-  };
+  const setField = (key: string, value: string | number) => setFormData(prev => ({ ...prev, [key]: value }));
 
+  const handleNext = () => {
+    if (!currentLead) return;
+
+    updateLead(currentLead.id, {
+      formData: {
+        ...currentLead.formData,
+        step7: formData
+      },
+      currentStep: 7
+    });
+    router.push('/lead/step7');
+  };
+  
   const handleExit = () => {
     if (!currentLead) {
         router.push('/leads');
@@ -51,91 +53,137 @@ export default function Step6Page() {
     updateLead(currentLead.id, {
       formData: {
         ...currentLead.formData,
-        step6: { coApplicants }
+        step7: formData
       },
       currentStep: 6
     });
     router.push('/leads');
   };
 
-  const handleDeleteCoApplicant = (id: string) => {
-    setCoApplicants(coApplicants.filter(ca => ca.id !== id));
-  };
-
-  const handleNext = () => {
-    if (!currentLead) return;
-
-    updateLead(currentLead.id, {
-      formData: {
-        ...currentLead.formData,
-        step6: { coApplicants }
-      },
-      currentStep: 7
-    });
-    router.push('/lead/step7');
-  };
-
   const handlePrevious = () => {
     router.push('/lead/step5');
   };
 
+  const canProceed = formData.collateralType && formData.ownershipType && formData.propertyValue;
+
   return (
     <DashboardLayout 
-        title="Co-Applicant Details" 
+        title="Collateral Details" 
         showNotifications={false}
         showExitButton={true} 
         onExit={handleExit}
     >
       <div className="max-w-2xl mx-auto">
-        <ProgressBar currentStep={6} totalSteps={11} />
+        <ProgressBar currentStep={6} totalSteps={10} />
 
         <div className="bg-white rounded-xl shadow-sm p-6 space-y-6">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">Co-Applicant Information</h2>
-
-            <Button
-              onClick={handleAddCoApplicant}
-              className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold mb-6"
-            >
-              <Plus className="w-5 h-5 mr-2" />
-              Add Co-Applicant
-            </Button>
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">Collateral Information</h2>
 
             <div className="space-y-4">
-              {coApplicants.map((coApplicant, index) => (
-                <Card key={coApplicant.id} className="border-2 border-blue-100">
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-gray-900 mb-2">{coApplicant.firstName} {coApplicant.lastName}</h3>
-                        <div className="space-y-1 text-sm text-gray-600">
-                          <p><span className="font-medium">Relationship:</span> {coApplicant.relationship}</p>
-                          <p><span className="font-medium">Gender:</span> {coApplicant.gender}</p>
-                          <p><span className="font-medium">PAN:</span> {coApplicant.pan}</p>
-                        </div>
-                      </div>
-                      <div className="flex space-x-2">
-                        <button className="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 flex items-center justify-center transition-colors">
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteCoApplicant(coApplicant.id)}
-                          className="w-9 h-9 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 flex items-center justify-center transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+              
+              {/* 1. Collateral Type */}
+              <div>
+                <Label htmlFor="collateralType">
+                  Collateral Type <span className="text-red-500">*</span>
+                </Label>
+                <Select
+                  value={formData.collateralType}
+                  onValueChange={(value) => setField('collateralType', value)}
+                >
+                  <SelectTrigger id="collateralType" className="h-12">
+                    <SelectValue placeholder="Select collateral type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="property">🏠 Property</SelectItem>
+                    <SelectItem value="vehicle">🚗 Vehicle</SelectItem>
+                    <SelectItem value="gold">💰 Gold</SelectItem>
+                    <SelectItem value="fd">💳 Fixed Deposit</SelectItem>
+                    <SelectItem value="shares">📈 Shares/Securities</SelectItem>
+                    <SelectItem value="machinery">⚙️ Machinery</SelectItem>
+                    <SelectItem value="other">📋 Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-              {coApplicants.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
-                  <p>No co-applicants added yet</p>
-                  <p className="text-sm mt-1">Click the button above to add a co-applicant</p>
+              {/* 2. Ownership Type */}
+              <div>
+                <Label htmlFor="ownershipType">
+                  Ownership Type <span className="text-red-500">*</span>
+                </Label>
+                <Select
+                  value={formData.ownershipType}
+                  onValueChange={(value) => setField('ownershipType', value)}
+                >
+                  <SelectTrigger id="ownershipType" className="h-12">
+                    <SelectValue placeholder="Select ownership type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="owned">Owned</SelectItem>
+                    <SelectItem value="rented">Rented</SelectItem>
+                    <SelectItem value="leased">Leased</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* 3. Estimated Property Value (with Currency) */}
+              <div>
+                <Label htmlFor="propertyValue">
+                  Estimated Property Value <span className="text-red-500">*</span>
+                </Label>
+                <div className="flex">
+                  <Select
+                    value={formData.currency}
+                    onValueChange={(value) => setField('currency', value)}
+                  >
+                    <SelectTrigger id="currency" className="h-12 w-24 rounded-r-none border-r-0">
+                      <SelectValue placeholder="₹ INR" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="INR">₹ INR</SelectItem>
+                      <SelectItem value="USD">$ USD</SelectItem>
+                      <SelectItem value="EUR">€ EUR</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    id="propertyValue"
+                    type="number"
+                    value={formData.propertyValue}
+                    onChange={(e) => setField('propertyValue', e.target.value)}
+                    placeholder="Enter estimated value"
+                    className="h-12 rounded-l-none"
+                    min="1" max="999999999"
+                  />
                 </div>
-              )}
+                <p className="text-xs text-gray-500 mt-1">Enter value between ₹1,00,000 to ₹99,99,99,999</p>
+              </div>
+
+              {/* 4. Collateral Description */}
+              <div>
+                <Label htmlFor="description">Collateral Description</Label>
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => setField('description', e.target.value)}
+                  placeholder="Enter detailed description of the collateral"
+                  className="min-h-[100px]"
+                />
+                <p className="text-xs text-gray-500 mt-1">Optional: Provide additional details about the collateral</p>
+              </div>
+
+              {/* 5. Location (Changed from Textarea to Input) */}
+              <div>
+                <Label htmlFor="location">Location</Label>
+                <Input
+                  id="location"
+                  type="text"
+                  value={formData.location}
+                  onChange={(e) => setField('location', e.target.value)}
+                  placeholder="Enter collateral location"
+                  className="h-12"
+                />
+              </div>
+
             </div>
           </div>
 
@@ -149,6 +197,7 @@ export default function Step6Page() {
             </Button>
             <Button
               onClick={handleNext}
+              disabled={!canProceed}
               className="h-12 px-8 bg-blue-600 hover:bg-blue-700 text-white font-semibold"
             >
               Next

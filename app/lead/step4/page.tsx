@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -10,85 +9,43 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { Plus, Trash2 } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
-
-interface Address {
-  id: string;
-  addressType: string;
-  country: string;
-  addressLine1: string;
-  addressLine2: string;
-  addressLine3: string;
-  postalCode: string;
-  isPrimary: boolean;
-}
 
 export default function Step4Page() {
   const { currentLead, updateLead } = useLead();
   const router = useRouter();
 
-  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [formData, setFormData] = useState({
+    occupationType: currentLead?.formData?.step5?.occupationType || 'salaried',
+    // Salaried
+    employerName: currentLead?.formData?.step5?.employerName || '',
+    designation: currentLead?.formData?.step5?.designation || '',
+    employmentType: currentLead?.formData?.step5?.employmentType || 'permanent',
+    employmentStatus: currentLead?.formData?.step5?.employmentStatus || 'present',
+    industry: currentLead?.formData?.step5?.industry || '',
+    natureOfBusiness: currentLead?.formData?.step5?.natureOfBusiness || '',
+    // Self Employed Non-Professional
+    orgName: currentLead?.formData?.step5?.orgName || '',
+    natureOfBusinessSENP: currentLead?.formData?.step5?.natureOfBusinessSENP || '',
+    industrySENP: currentLead?.formData?.step5?.industrySENP || '',
+    // Self Employed Professional
+    orgNameSEP: currentLead?.formData?.step5?.orgNameSEP || '',
+    natureOfProfession: currentLead?.formData?.step5?.natureOfProfession || '',
+    registrationNumber: currentLead?.formData?.step5?.registrationNumber || '',
+    yearsInProfession: currentLead?.formData?.step5?.yearsInProfession || '',
+    industrySEP: currentLead?.formData?.step5?.industrySEP || '',
+    // Others
+    natureOfOccupation: currentLead?.formData?.step5?.natureOfOccupation || '',
+    // Retired
+    previousOccupation: currentLead?.formData?.step5?.previousOccupation || '',
+  });
 
   useEffect(() => {
-    if (currentLead?.formData?.step4?.addresses) {
-      setAddresses(currentLead.formData.step4.addresses);
-    } else {
-      // Initialize with one default address if none exists
-      setAddresses([
-        {
-          id: Date.now().toString(),
-          addressType: 'residential',
-          country: 'India',
-          addressLine1: '',
-          addressLine2: '',
-          addressLine3: '',
-          postalCode: '',
-          isPrimary: true,
-        },
-      ]);
+    if (currentLead?.formData?.step5) {
+      setFormData(currentLead.formData.step5);
     }
   }, [currentLead]);
 
-  const handleAddAddress = () => {
-    setAddresses([
-      ...addresses,
-      {
-        id: Date.now().toString(),
-        addressType: 'residential',
-        country: 'India',
-        addressLine1: '',
-        addressLine2: '',
-        addressLine3: '',
-        postalCode: '',
-        isPrimary: addresses.length === 0, // Make first one primary by default
-      },
-    ]);
-  };
-
-  const handleRemoveAddress = (id: string) => {
-    const remainingAddresses = addresses.filter((addr) => addr.id !== id);
-    if (remainingAddresses.length > 0 && !remainingAddresses.some(a => a.isPrimary)) {
-        remainingAddresses[0].isPrimary = true;
-    }
-    setAddresses(remainingAddresses);
-  };
-
-  const handleAddressChange = (id: string, field: keyof Address, value: any) => {
-    setAddresses(
-      addresses.map((addr) => (addr.id === id ? { ...addr, [field]: value } : addr))
-    );
-  };
-
-  const handleSetPrimary = (id: string) => {
-    setAddresses(
-      addresses.map((addr) => ({
-        ...addr,
-        isPrimary: addr.id === id,
-      }))
-    );
-  };
+  const setField = (key: string, value: string) => setFormData({ ...formData, [key]: value });
 
   const handleNext = () => {
     if (!currentLead) return;
@@ -96,7 +53,7 @@ export default function Step4Page() {
     updateLead(currentLead.id, {
       formData: {
         ...currentLead.formData,
-        step4: { addresses },
+        step5: formData,
       },
       currentStep: 5,
     });
@@ -108,11 +65,10 @@ export default function Step4Page() {
       router.push('/leads');
       return;
     }
-    // Save current data as draft before exiting
     updateLead(currentLead.id, {
       formData: {
         ...currentLead.formData,
-        step4: { addresses },
+        step5: formData,
       },
       currentStep: 4,
     });
@@ -122,179 +78,336 @@ export default function Step4Page() {
   const handlePrevious = () => {
     router.push('/lead/step3');
   };
-
-  const canProceed = addresses.every(
-    (addr) => addr.addressType && addr.country && addr.addressLine1 && addr.postalCode
-  );
+  
+  const canProceed = () => {
+    switch (formData.occupationType) {
+      case 'salaried':
+        return formData.employerName && formData.designation;
+      case 'self-employed-non-professional':
+        return formData.natureOfBusinessSENP;
+      case 'self-employed-professional':
+        return formData.orgNameSEP && formData.natureOfProfession && formData.yearsInProfession;
+      case 'others':
+        return formData.natureOfOccupation;
+      case 'retired':
+        return true;
+      default:
+        return false;
+    }
+  };
 
   return (
     <DashboardLayout
-      title="Address Details"
+      title="Employment Details"
       showNotifications={false}
       showExitButton={true}
       onExit={handleExit}
     >
       <div className="max-w-2xl mx-auto">
-        <ProgressBar currentStep={4} totalSteps={11} />
+        <ProgressBar currentStep={4} totalSteps={10} />
 
         <div className="bg-white rounded-xl shadow-sm p-6 space-y-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-6">Address Information</h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-6">Employment Information</h2>
 
           <div className="space-y-4">
-            {addresses.map((address, index) => (
-              <Card key={address.id} className="p-4">
-                <CardContent className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <h3 className="font-medium text-lg">Address {index + 1}</h3>
-                    {addresses.length > 1 && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleRemoveAddress(address.id)}
-                      >
-                        <Trash2 className="h-4 w-4 text-red-500" />
-                      </Button>
-                    )}
-                  </div>
-                  <div>
-                    <Label htmlFor={`addressType-${address.id}`}>
-                      Address Type <span className="text-red-500">*</span>
-                    </Label>
-                    <Select
-                      value={address.addressType}
-                      onValueChange={(value) =>
-                        handleAddressChange(address.id, 'addressType', value)
-                      }
-                    >
-                      <SelectTrigger id={`addressType-${address.id}`} className="h-12">
-                        <SelectValue placeholder="Select address type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="residential">Residential</SelectItem>
-                        <SelectItem value="office">Office</SelectItem>
-                        <SelectItem value="permanent">Permanent</SelectItem>
-                        <SelectItem value="additional">Additional</SelectItem>
-                        <SelectItem value="property">Property</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label htmlFor={`country-${address.id}`}>Country</Label>
-                    <Input
-                      id={`country-${address.id}`}
-                      type="text"
-                      value={address.country}
-                      readOnly
-                      className="h-12 bg-gray-100"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor={`addressLine1-${address.id}`}>
-                      Address Line 1 <span className="text-red-500">*</span>
-                    </Label>
-                    <Input
-                      id={`addressLine1-${address.id}`}
-                      type="text"
-                      value={address.addressLine1}
-                      onChange={(e) =>
-                        handleAddressChange(address.id, 'addressLine1', e.target.value)
-                      }
-                      placeholder="House/Flat No., Building Name"
-                      className="h-12"
-                      maxLength={255}
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor={`addressLine2-${address.id}`}>Address Line 2</Label>
-                    <Input
-                      id={`addressLine2-${address.id}`}
-                      type="text"
-                      value={address.addressLine2}
-                      onChange={(e) =>
-                        handleAddressChange(address.id, 'addressLine2', e.target.value)
-                      }
-                      placeholder="Street Name, Area"
-                      className="h-12"
-                      maxLength={255}
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor={`addressLine3-${address.id}`}>Address Line 3</Label>
-                    <Input
-                      id={`addressLine3-${address.id}`}
-                      type="text"
-                      value={address.addressLine3}
-                      onChange={(e) =>
-                        handleAddressChange(address.id, 'addressLine3', e.target.value)
-                      }
-                      placeholder="Landmark, Additional Info"
-                      className="h-12"
-                      maxLength={255}
-                    />
-                  </div>
-
-
-                  <div>
-                    <Label htmlFor={`postalCode-${address.id}`}>
-                      Postal Code <span className="text-red-500">*</span>
-                    </Label>
-                    <Input
-                      id={`postalCode-${address.id}`}
-                      type="text"
-                      value={address.postalCode}
-                      onChange={(e) =>
-                        handleAddressChange(address.id, 'postalCode', e.target.value)
-                      }
-                      placeholder="Enter postal code / ZIP"
-                      className="h-12"
-                      maxLength={6}
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border">
-                    <Label
-                      htmlFor={`mark-primary-${address.id}`}
-                      className="text-base font-medium"
-                    >
-                      Mark as Primary Address
-                    </Label>
-                    <Switch
-                      id={`mark-primary-${address.id}`}
-                      checked={address.isPrimary}
-                      onCheckedChange={() => handleSetPrimary(address.id)}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-
-            <div className="pt-4">
-              <Button
-                variant="outline"
-                className="w-full h-12 text-blue-600 border-dashed border-blue-200 hover:bg-blue-50"
-                onClick={handleAddAddress}
+            <div>
+              <Label htmlFor="occupationType">
+                Occupation Type <span className="text-red-500">*</span>
+              </Label>
+              <Select
+                value={formData.occupationType}
+                onValueChange={(value) => setField('occupationType', value)}
               >
-                <Plus className="w-5 h-5 mr-2" />
-                Add Another Address
-              </Button>
+                <SelectTrigger id="occupationType" className="h-12">
+                  <SelectValue placeholder="Select Occupation Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="salaried">Salaried</SelectItem>
+                  <SelectItem value="self-employed-non-professional">
+                    Self Employed Non-Professional
+                  </SelectItem>
+                  <SelectItem value="self-employed-professional">
+                    Self Employed Professional
+                  </SelectItem>
+                  <SelectItem value="others">Others</SelectItem>
+                  <SelectItem value="retired">Retired</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
+
+            {formData.occupationType === 'salaried' && (
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="employerName">
+                    Employer Name <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    id="employerName"
+                    value={formData.employerName}
+                    onChange={(e) => setField('employerName', e.target.value)}
+                    placeholder="Enter employer name"
+                    className="h-12"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="designation">
+                    Designation <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    id="designation"
+                    value={formData.designation}
+                    onChange={(e) => setField('designation', e.target.value)}
+                    placeholder="Enter designation"
+                    className="h-12"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="employmentType">Employment Type</Label>
+                  <Select
+                    value={formData.employmentType}
+                    onValueChange={(value) => setField('employmentType', value)}
+                  >
+                    <SelectTrigger id="employmentType" className="h-12">
+                      <SelectValue placeholder="Select Employment Type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="permanent">Permanent</SelectItem>
+                      <SelectItem value="contract">Contract</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="employmentStatus">Employment Status</Label>
+                  <Select
+                    value={formData.employmentStatus}
+                    onValueChange={(value) => setField('employmentStatus', value)}
+                  >
+                    <SelectTrigger id="employmentStatus" className="h-12">
+                      <SelectValue placeholder="Select Employment Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="present">Present</SelectItem>
+                      <SelectItem value="past">Past</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="industry">Industry</Label>
+                  <Select
+                    value={formData.industry}
+                    onValueChange={(value) => setField('industry', value)}
+                  >
+                    <SelectTrigger id="industry" className="h-12">
+                      <SelectValue placeholder="Select Industry" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="information-technology">Information Technology</SelectItem>
+                      <SelectItem value="banking-finance">Banking & Finance</SelectItem>
+                      <SelectItem value="healthcare">Healthcare</SelectItem>
+                      <SelectItem value="manufacturing">Manufacturing</SelectItem>
+                      <SelectItem value="retail">Retail</SelectItem>
+                      <SelectItem value="education">Education</SelectItem>
+                      <SelectItem value="government">Government</SelectItem>
+                      <SelectItem value="others">Others</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="natureOfBusiness">Nature of Business</Label>
+                  <Select
+                    value={formData.natureOfBusiness}
+                    onValueChange={(value) => setField('natureOfBusiness', value)}
+                  >
+                    <SelectTrigger id="natureOfBusiness" className="h-12">
+                      <SelectValue placeholder="Select Nature of Business" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="software-development">Software Development</SelectItem>
+                      <SelectItem value="consulting">Consulting</SelectItem>
+                      <SelectItem value="trading">Trading</SelectItem>
+                      <SelectItem value="manufacturing">Manufacturing</SelectItem>
+                      <SelectItem value="services">Services</SelectItem>
+                      <SelectItem value="others">Others</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
+            
+            {formData.occupationType === 'self-employed-non-professional' && (
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="org-name">Organization Name</Label>
+                  <Input
+                    id="org-name"
+                    value={formData.orgName}
+                    onChange={(e) => setField('orgName', e.target.value)}
+                    placeholder="Enter organization name"
+                    className="h-12"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="nature-business-senp">Nature of Business <span className="text-red-500">*</span></Label>
+                   <Select
+                    value={formData.natureOfBusinessSENP}
+                    onValueChange={(value) => setField('natureOfBusinessSENP', value)}
+                  >
+                    <SelectTrigger id="nature-business-senp" className="h-12">
+                      <SelectValue placeholder="Select Nature of Business" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="trading">Trading</SelectItem>
+                        <SelectItem value="manufacturing">Manufacturing</SelectItem>
+                        <SelectItem value="retail">Retail</SelectItem>
+                        <SelectItem value="wholesale">Wholesale</SelectItem>
+                        <SelectItem value="transport">Transport</SelectItem>
+                        <SelectItem value="others">Others</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                 <div>
+                  <Label htmlFor="industry-senp">Industry</Label>
+                  <Select
+                    value={formData.industrySENP}
+                    onValueChange={(value) => setField('industrySENP', value)}
+                  >
+                    <SelectTrigger id="industry-senp" className="h-12">
+                      <SelectValue placeholder="Select Industry" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="agriculture">Agriculture</SelectItem>
+                        <SelectItem value="textiles">Textiles</SelectItem>
+                        <SelectItem value="food-beverage">Food & Beverage</SelectItem>
+                        <SelectItem value="construction">Construction</SelectItem>
+                        <SelectItem value="automotive">Automotive</SelectItem>
+                        <SelectItem value="others">Others</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
+
+            {formData.occupationType === 'self-employed-professional' && (
+              <div className="space-y-4">
+                 <div>
+                  <Label htmlFor="org-name-sep">Organization Name <span className="text-red-500">*</span></Label>
+                  <Input
+                    id="org-name-sep"
+                     value={formData.orgNameSEP}
+                    onChange={(e) => setField('orgNameSEP', e.target.value)}
+                    placeholder="Enter organization name"
+                    className="h-12"
+                  />
+                </div>
+                 <div>
+                  <Label htmlFor="nature-profession">Nature of Profession <span className="text-red-500">*</span></Label>
+                  <Select
+                    value={formData.natureOfProfession}
+                    onValueChange={(value) => setField('natureOfProfession', value)}
+                  >
+                    <SelectTrigger id="nature-profession" className="h-12">
+                      <SelectValue placeholder="Select Nature of Profession" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="doctor">Doctor</SelectItem>
+                        <SelectItem value="lawyer">Lawyer</SelectItem>
+                        <SelectItem value="chartered-accountant">Chartered Accountant</SelectItem>
+                        <SelectItem value="architect">Architect</SelectItem>
+                        <SelectItem value="consultant">Consultant</SelectItem>
+                        <SelectItem value="others">Others</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="registration-number">Registration Number</Label>
+                  <Input
+                    id="registration-number"
+                    value={formData.registrationNumber}
+                    onChange={(e) => setField('registrationNumber', e.target.value)}
+                    placeholder="Enter registration number"
+                    className="h-12"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="years-profession">Years in Profession <span className="text-red-500">*</span></Label>
+                  <Input
+                    id="years-profession"
+                    type="number"
+                    value={formData.yearsInProfession}
+                    onChange={(e) => setField('yearsInProfession', e.target.value)}
+                    placeholder="Enter years in profession"
+                    className="h-12"
+                  />
+                </div>
+                 <div>
+                  <Label htmlFor="industry-sep">Industry</Label>
+                  <Select
+                    value={formData.industrySEP}
+                    onValueChange={(value) => setField('industrySEP', value)}
+                  >
+                    <SelectTrigger id="industry-sep" className="h-12">
+                      <SelectValue placeholder="Select Industry" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="healthcare">Healthcare</SelectItem>
+                        <SelectItem value="legal">Legal</SelectItem>
+                        <SelectItem value="financial-services">Financial Services</SelectItem>
+                        <SelectItem value="architecture">Architecture</SelectItem>
+                        <SelectItem value="consulting">Consulting</SelectItem>
+                        <SelectItem value="others">Others</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
+            
+            {formData.occupationType === 'others' && (
+                 <div className="space-y-4">
+                    <div>
+                        <Label htmlFor="nature-occupation">Nature of Occupation <span className="text-red-500">*</span></Label>
+                         <Select
+                            value={formData.natureOfOccupation}
+                            onValueChange={(value) => setField('natureOfOccupation', value)}
+                        >
+                            <SelectTrigger id="nature-occupation" className="h-12">
+                            <SelectValue placeholder="Select Nature of Occupation" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="housewife">Housewife</SelectItem>
+                                <SelectItem value="student">Student</SelectItem>
+                                <SelectItem value="unemployed">Unemployed</SelectItem>
+                                <SelectItem value="freelancer">Freelancer</SelectItem>
+                                <SelectItem value="others">Others</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
+            )}
+            
+            {formData.occupationType === 'retired' && (
+                 <div className="space-y-4">
+                    <div>
+                        <Label htmlFor="previous-occupation">Previous Occupation</Label>
+                        <Input
+                            id="previous-occupation"
+                             value={formData.previousOccupation}
+                            onChange={(e) => setField('previousOccupation', e.target.value)}
+                            placeholder="Enter previous occupation"
+                            className="h-12"
+                        />
+                    </div>
+                 </div>
+            )}
+
           </div>
 
           <div className="flex justify-between pt-4">
-            <Button
-              onClick={handlePrevious}
-              variant="outline"
-              className="h-12 px-8"
-            >
+            <Button onClick={handlePrevious} variant="outline" className="h-12 px-8">
               Previous
             </Button>
             <Button
               onClick={handleNext}
-              disabled={!canProceed}
+              disabled={!canProceed()}
               className="h-12 px-8 bg-blue-600 hover:bg-blue-700 text-white font-semibold"
             >
               Next
