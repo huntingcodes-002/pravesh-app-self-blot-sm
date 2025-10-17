@@ -96,6 +96,13 @@ export default function Step1Page() {
     router.push('/lead/step2');
   };
 
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>, field: 'firstName' | 'lastName') => {
+    const value = e.target.value;
+    // Allow only alphabetic characters and spaces
+    const sanitizedValue = value.replace(/[^a-zA-Z\s]/g, '');
+    setFormData({ ...formData, [field]: sanitizedValue });
+  }
+
   const appTypeDescriptions: { [key: string]: string } = {
     'new': 'Fresh loan application for first-time customers or new loan requirements.',
     'balance-transfer': 'Transfer existing loan from another lender to Saarathi Finance with better terms.',
@@ -164,8 +171,8 @@ export default function Step1Page() {
             <div>
                 <Label className="text-sm font-medium text-[#003366] mb-2 block">Customer Name <span className="text-[#DC2626]">*</span></Label>
                 <div className="grid grid-cols-2 gap-3">
-                    <Input id="first-name" value={formData.firstName} onChange={(e) => setFormData({ ...formData, firstName: e.target.value })} placeholder="First Name" className="h-12 rounded-lg" maxLength={100} disabled={isMobileVerified}/>
-                    <Input id="last-name" value={formData.lastName} onChange={(e) => setFormData({ ...formData, lastName: e.target.value })} placeholder="Last Name" className="h-12 rounded-lg" maxLength={50} disabled={isMobileVerified}/>
+                    <Input id="first-name" value={formData.firstName} onChange={(e) => handleNameChange(e, 'firstName')} placeholder="First Name" className="h-12 rounded-lg" maxLength={100} disabled={isMobileVerified}/>
+                    <Input id="last-name" value={formData.lastName} onChange={(e) => handleNameChange(e, 'lastName')} placeholder="Last Name" className="h-12 rounded-lg" maxLength={50} disabled={isMobileVerified}/>
                 </div>
             </div>
             

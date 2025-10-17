@@ -72,7 +72,7 @@ export default function ForgotPasswordPage() {
   // Custom classes for design fidelity
   const iconBoxClass = 'w-20 h-20 bg-[#0072CE] rounded-2xl mx-auto mb-4 flex items-center justify-center';
   const labelClass = 'block text-sm font-medium text-[#003366]';
-  const inputClass = 'w-full pl-10 pr-4 py-3 border-2 border-[#F3F4F6] rounded-xl bg-white text-[#003366] placeholder-[#6B7280] focus:outline-none focus:ring-2 focus:ring-[#0072CE] focus:border-[#0072CE] transition-colors h-12';
+  const inputClass = 'w-full pl-10 pr-4 py-3 border-2 border-transparent rounded-xl bg-white text-[#003366] placeholder-[#6B7280] focus:outline-none focus:ring-2 focus:ring-[#0072CE] focus:border-[#0072CE] transition-colors h-12';
   
   const buttonClass = cn(
     'w-full h-12 py-4 rounded-xl font-semibold text-lg transition-colors flex items-center justify-center',
@@ -113,7 +113,7 @@ export default function ForgotPasswordPage() {
                         
                         <div id="email-input-section" className="space-y-2">
                             <Label htmlFor="email" className={labelClass}>Email Address</Label>
-                            <div className={cn("relative", emailError && "border-[#DC2626] rounded-xl border-2")}>
+                            <div className={cn("relative bg-gray-50 border-2 border-gray-200 rounded-xl", emailError && "border-red-500")}>
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                     <Mail className="w-4 h-4 text-[#6B7280]" />
                                 </div>
@@ -124,13 +124,13 @@ export default function ForgotPasswordPage() {
                                     onChange={handleEmailChange}
                                     onBlur={handleEmailBlur}
                                     placeholder="Enter your email address"
-                                    className={cn(inputClass, "border-none")} 
+                                    className={cn(inputClass, "border-none bg-transparent")} 
                                     required
                                 />
                             </div>
                             
                             {emailError && (
-                                <div id="email-error" className="text-[#DC2626] text-sm font-medium mt-2 flex items-center gap-1">
+                                <div id="email-error" className="text-red-600 text-sm font-medium mt-2 flex items-center gap-1">
                                     <AlertTriangle className="w-4 h-4 mr-1"/>
                                     <span id="email-error-text">{emailError}</span>
                                 </div>

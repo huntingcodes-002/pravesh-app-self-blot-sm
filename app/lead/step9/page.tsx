@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -44,17 +43,23 @@ export default function Step9Page() {
   const [documentType, setDocumentType] = useState('');
   const [documentRemark, setDocumentRemark] = useState('');
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>(
-    currentLead?.formData?.step10?.files || []
+    currentLead?.formData?.step9?.files || []
   );
   
-  // Camera state
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [cameraPermissionDenied, setCameraPermissionDenied] = useState(false);
   
-  // Total steps updated to 11
   const totalSteps = 11;
 
+  useEffect(() => {
+    if (currentLead) {
+      updateLead(currentLead.id, {
+        formData: { ...currentLead.formData, step9: { files: uploadedFiles } },
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [uploadedFiles]);
 
   useEffect(() => {
     return () => {
@@ -149,7 +154,7 @@ export default function Step9Page() {
               id: fileId,
               name: `capture_${fileId}.jpg`,
               type: documentType,
-              status: 'Success', // By default, camera captures are considered valid
+              status: 'Success', 
               remark: documentRemark,
             };
             setUploadedFiles((prev) => [...prev, newFile]);
@@ -188,22 +193,20 @@ export default function Step9Page() {
     }
     if (!currentLead) return;
     
-    // Navigate to the new Step 10 (Payments)
-    updateLead(currentLead.id, { formData: { ...currentLead.formData, step10: { files: uploadedFiles } }, currentStep: 10 });
+    updateLead(currentLead.id, { currentStep: 10 });
     router.push('/lead/step10'); 
   };
   
   const handleContinueWithoutDocs = () => { 
     if (!currentLead) return;
     
-    // Navigate to the new Step 10 (Payments)
-    updateLead(currentLead.id, { formData: { ...currentLead.formData, step10: { files: uploadedFiles } }, currentStep: 10 });
+    updateLead(currentLead.id, { currentStep: 10 });
     router.push('/lead/step10'); 
   };
 
   const handleExit = () => {
     if (!currentLead) { router.push('/leads'); return; }
-    updateLead(currentLead.id, { formData: { ...currentLead.formData, step10: { files: uploadedFiles } }, currentStep: 9 });
+    updateLead(currentLead.id, { currentStep: 9 });
     router.push('/leads');
   };
 

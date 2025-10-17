@@ -121,7 +121,7 @@ export default function Step3Page() {
   };
 
   const canProceed = addresses.every(
-    (addr) => addr.addressType && addr.country && addr.addressLine1 && addr.postalCode
+    (addr) => addr.addressType && addr.country && addr.addressLine1 && addr.postalCode && addr.postalCode.length === 6
   );
 
   return (
@@ -244,9 +244,10 @@ export default function Step3Page() {
                       type="text"
                       value={address.postalCode}
                       onChange={(e) => handleAddressChange(address.id, 'postalCode', e.target.value.replace(/[^0-9]/g, ''))}
-                      placeholder="Enter postal code / ZIP"
+                      placeholder="Enter 6-digit postal code"
                       className="h-12 rounded-lg"
                       maxLength={6}
+                      minLength={6}
                     />
                   </div>
 

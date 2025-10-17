@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState } from 'react';
@@ -22,7 +21,6 @@ export default function Step8Page() {
   });
   const [moveToNextStage, setMoveToNextStage] = useState(false);
   
-  // Total steps updated to 11
   const totalSteps = 11;
 
 
@@ -31,6 +29,8 @@ export default function Step8Page() {
   };
 
   const handleEdit = (step: number) => {
+    if (!currentLead) return;
+    updateLead(currentLead.id, { currentStep: step });
     router.push(`/lead/step${step}`);
   };
 
@@ -38,12 +38,7 @@ export default function Step8Page() {
     if (!currentLead) return;
 
     if (moveToNextStage) {
-      // Navigate to the new Step 9 (Documents)
       updateLead(currentLead.id, {
-        formData: {
-          ...currentLead.formData,
-          step9: { moveToNextStage }, // Note: step9 data is now a flag for moving forward
-        },
         currentStep: 9,
       });
       router.push('/lead/step9');
@@ -58,12 +53,7 @@ export default function Step8Page() {
         router.push('/leads');
         return;
     }
-    // Save current data as draft before exiting
     updateLead(currentLead.id, {
-      formData: {
-        ...currentLead.formData,
-        step9: { moveToNextStage }
-      },
       currentStep: 8
     });
     router.push('/leads');
@@ -73,6 +63,8 @@ export default function Step8Page() {
   const handlePrevious = () => {
     router.push('/lead/step7');
   };
+
+  const primaryAddress = currentLead?.formData?.step3?.addresses?.find((addr: any) => addr.isPrimary) || currentLead?.formData?.step3?.addresses?.[0];
 
   return (
     <DashboardLayout
@@ -180,10 +172,17 @@ export default function Step8Page() {
                           {currentLead?.customerMobile || 'N/A'}
                         </span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">PAN:</span>
-                        <span className="font-medium">{currentLead?.panNumber || 'N/A'}</span>
-                      </div>
+                      {currentLead?.formData?.step2?.hasPan === 'no' ? (
+                        <div className="flex justify-between">
+                            <span className="text-gray-600">{currentLead?.formData?.step2?.alternateIdType || 'Alternate ID'}:</span>
+                            <span className="font-medium">{currentLead?.formData?.step2?.documentNumber || 'N/A'}</span>
+                        </div>
+                        ) : (
+                        <div className="flex justify-between">
+                            <span className="text-gray-600">PAN:</span>
+                            <span className="font-medium">{currentLead?.panNumber || 'N/A'}</span>
+                        </div>
+                        )}
                       <div className="flex justify-between">
                         <span className="text-gray-600">Date of Birth:</span>
                         <span className="font-medium">{currentLead?.dob || 'N/A'}</span>
@@ -191,13 +190,13 @@ export default function Step8Page() {
                        <div className="flex justify-between">
                         <span className="text-gray-600">Employment:</span>
                         <span className="font-medium">
-                          {currentLead?.formData?.step5?.occupationType || 'N/A'}
+                          {currentLead?.formData?.step4?.occupationType || 'N/A'}
                         </span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Address:</span>
                          <span className="font-medium">
-                            {currentLead?.formData?.step4?.addresses?.[0]?.postalCode ? `${currentLead.formData.step4.addresses[0].postalCode}` : 'N/A'}
+                            {primaryAddress ? `${primaryAddress.addressLine1}, ${primaryAddress.postalCode}` : 'N/A'}
                         </span>
                       </div>
                     </div>
@@ -239,19 +238,19 @@ export default function Step8Page() {
                       <div className="flex justify-between">
                         <span className="text-gray-600">Product Code:</span>
                         <span className="font-medium">
-                          {currentLead?.formData?.step8?.productCode || 'N/A'}
+                          {currentLead?.formData?.step7?.productCode || 'N/A'}
                         </span>
                       </div>
                        <div className="flex justify-between">
                         <span className="text-gray-600">Interest Rate:</span>
                         <span className="font-medium">
-                           {currentLead?.formData?.step8?.interestRate ? `${currentLead.formData.step8.interestRate}% p.a.` : 'N/A'}
+                           {currentLead?.formData?.step7?.interestRate ? `${currentLead.formData.step7.interestRate}% p.a.` : 'N/A'}
                         </span>
                       </div>
                        <div className="flex justify-between">
                         <span className="text-gray-600">Tenure:</span>
                         <span className="font-medium">
-                          {currentLead?.formData?.step8?.tenure ? `${currentLead.formData.step8.tenure} Months` : 'N/A'}
+                          {currentLead?.formData?.step7?.tenure ? `${currentLead.formData.step7.tenure} ${currentLead?.formData?.step7?.tenureUnit}` : 'N/A'}
                         </span>
                       </div>
                        <div className="flex justify-between">
@@ -301,16 +300,7 @@ export default function Step8Page() {
               Previous
             </Button>
             <Button
-              onClick={() => {
-                if (moveToNextStage) {
-                    // Navigate to the new Step 9 (Documents)
-                    updateLead(currentLead.id, { currentStep: 9 });
-                    router.push('/lead/step9');
-                } else {
-                    submitLead(currentLead.id);
-                    router.push('/leads');
-                }
-              }}
+              onClick={handleSubmit}
               className="h-12 px-8 bg-green-600 hover:bg-green-700 text-white font-semibold"
             >
               {moveToNextStage ? 'Continue to Documents' : 'Submit for Review'}

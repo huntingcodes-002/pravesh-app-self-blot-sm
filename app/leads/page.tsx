@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -328,10 +327,10 @@ export default function LeadsDashboardPage() {
                     {/* Row 1: App ID & Status */}
                     <div className="flex justify-between items-start">
                       <div className="space-y-1">
-                        <p className="font-semibold text-gray-900 flex items-center gap-2">
+                        <div className="font-semibold text-gray-900 flex items-center gap-2">
                           {lead.appId} 
                           {getStatusBadge(lead.status)}
-                        </p>
+                        </div>
                         <p className="text-sm font-medium text-gray-700">{lead.customerName || 'New Lead'}</p>
                       </div>
                       
