@@ -1,12 +1,16 @@
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Calendar, CheckCircle, AlertTriangle, Loader } from 'lucide-react';
+// Added Edit, X icons and all necessary component imports
+import { Calendar, CheckCircle, AlertTriangle, Loader, Edit, X } from 'lucide-react';
 import DashboardLayout from '@/components/DashboardLayout';
 import ProgressBar from '@/components/ProgressBar';
 import { useLead } from '@/contexts/LeadContext';
-import { validatePANDetails } from '@/lib/mock-auth';
+// Assuming validatePANDetails and PAN_DATA are available here, 
+// using the internal mock-auth logic by implicitly importing required module components
+import { validatePANDetails, PAN_DATA } from '@/lib/mock-auth'; 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,13 +23,132 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+// ALERT DIALOG IMPORTS ARE CRUCIAL FOR THE POPUP
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction, AlertDialogCancel } from '@/components/ui/alert-dialog';
 
 type ValidationStatus = 'pending' | 'valid' | 'invalid' | 'mismatch';
+
+// Helper component for the Customer Name/Edit Popup
+function NameEditDialog({ 
+    isOpen, 
+    setIsOpen, 
+    currentFirstName, 
+    currentLastName, 
+    currentMismatchReason,
+    onSave 
+}: { 
+    isOpen: boolean, 
+    setIsOpen: (open: boolean) => void, 
+    currentFirstName: string, 
+    currentLastName: string, 
+    currentMismatchReason: string,
+    onSave: (newFirstName: string, newLastName: string, mismatchReason: string) => void 
+}) {
+    const [firstName, setFirstName] = useState(currentFirstName);
+    const [lastName, setLastName] = useState(currentLastName);
+    const [mismatchReason, setMismatchReason] = useState(currentMismatchReason);
+    
+    // Sync state when dialog opens or parent data changes
+    useEffect(() => {
+        setFirstName(currentFirstName);
+        setLastName(currentLastName);
+        setMismatchReason(currentMismatchReason);
+    }, [currentFirstName, currentLastName, currentMismatchReason, isOpen]);
+    
+    const handleCancel = () => {
+        // Reset local state back to props on cancel
+        setFirstName(currentFirstName);
+        setLastName(currentLastName);
+        setMismatchReason(currentMismatchReason);
+        setIsOpen(false);
+    };
+
+    const handleSave = () => {
+        // Trigger save even if only the reason changes (isReasonProvided is true)
+        const reason = mismatchReason.trim();
+        onSave(firstName, lastName, reason);
+        setIsOpen(false);
+    };
+
+    // Check if the name has been manually changed OR if a reason has been typed
+    const isNameChanged = firstName !== currentFirstName || lastName !== currentLastName;
+    const isReasonChanged = mismatchReason.trim() !== currentMismatchReason.trim();
+    const canSave = isNameChanged || isReasonChanged;
+
+    return (
+        <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle className="flex items-center text-[#003366]">
+                       <Edit className="w-5 h-5 mr-2" /> Update Customer Name
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                        Update the customer's name. If a PAN mismatch occurs, you can optionally provide a reason.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+
+                <div className="space-y-4 py-2">
+                    <div className="grid grid-cols-2 gap-3">
+                         <div>
+                            <Label htmlFor="edit-first-name" className="text-sm font-medium text-[#003366] mb-2 block">First Name</Label>
+                            <Input 
+                                id="edit-first-name" 
+                                value={firstName} 
+                                onChange={e => setFirstName(e.target.value)} 
+                                placeholder="Enter First Name" 
+                                className="h-10 rounded-lg"
+                                maxLength={100}
+                            />
+                        </div>
+                        <div>
+                            <Label htmlFor="edit-last-name" className="text-sm font-medium text-[#003366] mb-2 block">Last Name</Label>
+                            <Input 
+                                id="edit-last-name" 
+                                value={lastName} 
+                                onChange={e => setLastName(e.target.value)} 
+                                placeholder="Enter Last Name" 
+                                className="h-10 rounded-lg"
+                                maxLength={50}
+                            />
+                        </div>
+                    </div>
+                    
+                    <div className="pt-2">
+                        <Label htmlFor="mismatch-reason" className="text-sm font-medium text-[#003366] mb-2 block">Reason for Name Difference (Optional)</Label>
+                        <Textarea 
+                            id="mismatch-reason" 
+                            value={mismatchReason} 
+                            onChange={e => setMismatchReason(e.target.value)} 
+                            placeholder="e.g., Name change post marriage, short name usage..." 
+                            rows={2} 
+                            className="rounded-lg"
+                            maxLength={255}
+                        />
+                    </div>
+                </div>
+
+                <AlertDialogFooter>
+                    <AlertDialogCancel asChild><Button variant="outline" onClick={handleCancel}>Cancel</Button></AlertDialogCancel>
+                    <AlertDialogAction asChild>
+                        <Button 
+                            onClick={handleSave} 
+                            disabled={!canSave}
+                            className={cn(canSave ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-300')}
+                        >
+                            Save Changes
+                        </Button>
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+    );
+}
 
 export default function Step2Page() {
   const { currentLead, updateLead } = useLead();
   const router = useRouter();
   
+  // Consolidated formData structure
   const [formData, setFormData] = useState({
     customerType: currentLead?.formData?.step2?.customerType || 'individual',
     hasPan: currentLead?.formData?.step2?.hasPan || 'yes',
@@ -39,13 +162,20 @@ export default function Step2Page() {
     gender: currentLead?.gender || '',
     email: currentLead?.formData?.step2?.email || '',
   });
-  
+
+  // Local state for validation results and UI flags
   const [panValidationStatus, setPanValidationStatus] = useState<ValidationStatus>('pending');
   const [panApiName, setPanApiName] = useState('');
-  const [nameMismatchReason, setNameMismatchReason] = useState('');
+  const [nameMismatchReason, setNameMismatchReason] = useState(currentLead?.formData?.step2?.nameMismatchReason || '');
   const [isPanTouched, setIsPanTouched] = useState(false);
   const [emailError, setEmailError] = useState('');
+  
+  // State for Name Edit Logic
+  const [isNameEditOpen, setIsNameEditOpen] = useState(false);
+  const [localFirstName, setLocalFirstName] = useState(currentLead?.customerFirstName || '');
+  const [localLastName, setLocalLastName] = useState(currentLead?.customerLastName || '');
 
+  // Initial load and sync with currentLead
   useEffect(() => {
     if (currentLead) {
         const step2Data = currentLead.formData?.step2 || {};
@@ -63,28 +193,79 @@ export default function Step2Page() {
             gender: currentLead.gender || '',
             email: step2Data.email || '',
         }));
+        // Use local state for names which might be different from customerName on lead object
+        setLocalFirstName(currentLead.customerFirstName || '');
+        setLocalLastName(currentLead.customerLastName || '');
+        setNameMismatchReason(step2Data.nameMismatchReason || '');
+        
+        // Re-run validation on load if PAN is present
+        if (currentLead.panNumber) {
+            handlePanValidation(currentLead.panNumber, currentLead.customerFirstName || '', currentLead.customerLastName || '');
+        }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentLead]);
   
-  const handlePanValidation = () => {
-    if (formData.pan.length !== 10) return;
+  const handlePanValidation = (pan: string, firstName: string, lastName: string) => {
+    // Basic validation for PAN length
+    if (pan.length !== 10) {
+        setPanValidationStatus('pending');
+        setPanApiName('');
+        return;
+    }
     setIsPanTouched(true);
     setPanValidationStatus('pending');
     
+    // Mock API Call Simulation
     setTimeout(() => {
-        const result = validatePANDetails(formData.pan, 'Mr', currentLead?.customerFirstName || '', currentLead?.customerLastName || '');
-        if (result.panExists) {
-            const fetchedName = `${result.firstNameMatch ? currentLead?.customerFirstName : 'RAJESH'} ${result.lastNameMatch ? currentLead?.customerLastName : 'K'}`.toUpperCase();
+        // validatePANDetails compares provided names against mock PAN data
+        const result = validatePANDetails(pan, 'Mr', firstName, lastName);
+        
+        // Find the actual mock PAN data to get the expected name (used for display)
+        const panData = PAN_DATA.find((p: any) => p.pan.toUpperCase() === pan.toUpperCase());
+
+        if (panData) {
+            // Use the name from the mock data for display in PAN Name field
+            const fetchedName = `${panData.firstName} ${panData.lastName}`.trim().toUpperCase();
             setPanApiName(fetchedName);
-            if (`${currentLead?.customerFirstName} ${currentLead?.customerLastName}`.toLowerCase() === fetchedName.toLowerCase()) {
+
+            // Check if the current user name matches the fetched name
+            if (result.firstNameMatch && result.lastNameMatch) {
                 setPanValidationStatus('valid');
             } else {
                 setPanValidationStatus('mismatch');
             }
         } else {
+            // PAN number is 10 digits but not found in the mock data
             setPanValidationStatus('invalid');
+            setPanApiName('');
         }
     }, 1500);
+  };
+  
+  const handlePanInputBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    // Only validate if input value changed AND has PAN is 'yes'
+    if (formData.hasPan === 'yes') {
+        const newPan = e.target.value.toUpperCase();
+        
+        // Trigger validation if the PAN value has changed or validation hasn't run
+        if (newPan !== formData.pan || panValidationStatus === 'pending') {
+             setFormData(prev => ({...prev, pan: newPan})); // Update PAN immediately in form data
+             handlePanValidation(newPan, localFirstName, localLastName);
+        }
+    }
+  };
+
+  const handleNameSave = (newFirstName: string, newLastName: string, mismatchReason: string) => {
+    // 1. Update local state
+    setLocalFirstName(newFirstName);
+    setLocalLastName(newLastName);
+    setNameMismatchReason(mismatchReason);
+    
+    // 2. Re-run PAN validation against the new name
+    if (formData.hasPan === 'yes' && formData.pan.length === 10) {
+        handlePanValidation(formData.pan, newFirstName, newLastName);
+    }
   };
 
   const handleDateChange = (date: Date | undefined) => {
@@ -112,8 +293,17 @@ export default function Step2Page() {
 
   const handleNext = () => {
     if (!currentLead) return;
+    
+    // Block progression if PAN is invalid
+    if (formData.hasPan === 'yes' && panValidationStatus === 'invalid') {
+        return;
+    }
+    
     updateLead(currentLead.id, {
-      formData: { ...currentLead.formData, step2: formData },
+      // Save local first/last name and nameMismatchReason into lead object
+      formData: { ...currentLead.formData, step2: { ...formData, nameMismatchReason } },
+      customerFirstName: localFirstName,
+      customerLastName: localLastName,
       panNumber: formData.hasPan === 'yes' ? formData.pan : '',
       dob: formData.dob,
       age: formData.age,
@@ -125,22 +315,56 @@ export default function Step2Page() {
 
   const handlePrevious = () => router.push('/lead/step1');
   
-  const canProceed = formData.dob && formData.gender && !emailError &&
-    (formData.hasPan === 'no' 
-        ? (formData.panUnavailabilityReason && formData.alternateIdType && formData.documentNumber) 
-        : (panValidationStatus === 'valid' || (panValidationStatus === 'mismatch' && nameMismatchReason))
-    );
+  // Check conditions for proceeding
+  // The user can proceed if:
+  // 1. Has PAN and status is VALID or MISMATCH (mismatch reason is OPTIONAL now)
+  // 2. Does NOT have PAN and all mandatory fields are filled
+  // 3. DOB, Gender, and Email validation passes
+  const isPanValidAndMatched = formData.hasPan === 'yes' && (panValidationStatus === 'valid' || panValidationStatus === 'mismatch');
+  const isNoPanValid = formData.hasPan === 'no' && formData.panUnavailabilityReason && formData.alternateIdType && formData.documentNumber;
+  
+  const canProceed = formData.dob && formData.gender && !emailError && (isPanValidAndMatched || isNoPanValid);
+    
+  const customerFullName = `${localFirstName} ${localLastName}`.trim();
+  const isNameMismatch = panValidationStatus === 'mismatch';
 
   return (
     <DashboardLayout title="Customer Details" showNotifications={false} showExitButton={true}>
+      {/* Name Edit Dialog - always present but hidden until opened */}
+      <NameEditDialog
+            isOpen={isNameEditOpen}
+            setIsOpen={setIsNameEditOpen}
+            currentFirstName={localFirstName}
+            currentLastName={localLastName}
+            currentMismatchReason={nameMismatchReason}
+            onSave={handleNameSave}
+        />
+        
       <div className="max-w-2xl mx-auto pb-24">
         <ProgressBar currentStep={2} totalSteps={10} />
         
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-4">
             <div className="space-y-4">
-                 <div>
-                    <Label className="block text-xs font-medium text-neutral mb-1">Customer Name</Label>
-                    <p className="text-sm font-semibold text-[#003366]">{currentLead?.customerName || 'N/A'}</p>
+                 <div className="flex items-start justify-between">
+                    <div>
+                        <Label className="block text-xs font-medium text-neutral mb-1">Customer Name</Label>
+                        <div className="flex items-center gap-2">
+                            <p className="text-sm font-semibold text-[#003366]">{customerFullName || 'N/A'}</p>
+                            {isNameMismatch && (
+                                <AlertTriangle className="text-yellow-600 w-4 h-4" title="Name Mismatch Detected"/>
+                            )}
+                        </div>
+                    </div>
+                    {/* Edit Button next to Customer Name */}
+                    <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => setIsNameEditOpen(true)}
+                        className='w-8 h-8 rounded-full flex-shrink-0'
+                        title="Edit Customer Name"
+                    >
+                        <Edit className="w-4 h-4 text-blue-600" />
+                    </Button>
                 </div>
                 <div>
                     <Label className="block text-xs font-medium text-neutral mb-1">Mobile Number</Label>
@@ -167,55 +391,93 @@ export default function Step2Page() {
             <div className="space-y-6">
                 <div>
                     <Label className="block text-sm font-medium text-[#003366] mb-3">Does the customer have a PAN? *</Label>
-                    <RadioGroup value={formData.hasPan} onValueChange={(value) => setFormData({ ...formData, hasPan: value, pan: '', panValidationStatus: 'pending' })} className="flex gap-4">
+                    <RadioGroup value={formData.hasPan} onValueChange={(value) => {
+                        setFormData({ ...formData, hasPan: value, pan: '' }); // Clear PAN field on switch
+                        setPanValidationStatus('pending'); // Reset status
+                        setPanApiName('');
+                        setIsPanTouched(false);
+                    }} className="flex gap-4">
                         <div className="flex items-center space-x-2"><RadioGroupItem value="yes" id="pan-yes" /><Label htmlFor="pan-yes" className="font-normal">Yes</Label></div>
                         <div className="flex items-center space-x-2"><RadioGroupItem value="no" id="pan-no" /><Label htmlFor="pan-no" className="font-normal">No</Label></div>
                     </RadioGroup>
                 </div>
                 
-                {formData.hasPan === 'yes' ? (
+                {formData.hasPan === 'yes' && (
                     <div className="space-y-4">
                         <div>
                             <Label htmlFor="pan-input" className="text-sm font-medium text-[#003366] mb-2 block">PAN Number *</Label>
                              <div className="relative">
-                                <Input id="pan-input" maxLength={10} placeholder="ABCDE1234F" value={formData.pan} onChange={e => setFormData({...formData, pan: e.target.value.toUpperCase()})} onBlur={handlePanValidation} className="w-full h-12 px-4 py-3 border-gray-300 rounded-xl uppercase tracking-wider"/>
-                                {panValidationStatus === 'pending' && isPanTouched && <Loader className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#0072CE] animate-spin" />}
-                                {panValidationStatus === 'valid' && <CheckCircle className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#16A34A]" />}
-                                {panValidationStatus === 'invalid' && <AlertTriangle className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#DC2626]" />}
+                                <Input 
+                                    id="pan-input" 
+                                    maxLength={10} 
+                                    placeholder="ABCDE1234F" 
+                                    value={formData.pan} 
+                                    // We only update formData.pan on keystroke; validation runs on blur
+                                    onChange={e => setFormData(prev => ({...prev, pan: e.target.value.toUpperCase()}))} 
+                                    onBlur={handlePanInputBlur} 
+                                    className={cn("w-full h-12 px-4 py-3 border-gray-300 rounded-xl uppercase tracking-wider", panValidationStatus === 'invalid' && 'border-red-500')}
+                                />
+                                {panValidationStatus === 'pending' && isPanTouched && <Loader className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#0072CE] animate-spin w-5 h-5" />}
+                                {panValidationStatus === 'valid' && <CheckCircle className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#16A34A] w-5 h-5" />}
+                                {panValidationStatus === 'invalid' && <X className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#DC2626] w-5 h-5" />}
+                                {panValidationStatus === 'mismatch' && <AlertTriangle className="absolute right-3 top-1/2 transform -translate-y-1/2 text-yellow-600 w-5 h-5" />}
                              </div>
+                             {/* ERROR MESSAGE: Invalid PAN */}
+                             {panValidationStatus === 'invalid' && (
+                                <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
+                                    <X className="w-4 h-4" /> Invalid PAN: Record not found. Please check and re-enter.
+                                </p>
+                             )}
                         </div>
-                        {isPanTouched && panValidationStatus === 'valid' && (
+                        
+                        {/* VALIDATION STATUS CARD: Valid */}
+                        {panValidationStatus === 'valid' && (
                              <div className="bg-[#16A34A]/5 border border-[#16A34A]/20 rounded-xl p-4">
                                 <div className="flex items-center justify-between mb-2">
                                     <div className="flex items-center gap-2">
-                                        <CheckCircle className="text-[#16A34A]" />
+                                        <CheckCircle className="text-[#16A34A] w-5 h-5" />
                                         <span className="text-sm font-medium text-[#16A34A]">PAN Verified</span>
                                     </div>
                                 </div>
                                 <p className="text-sm text-[#003366]">Name on PAN: <span className="font-medium">{panApiName}</span></p>
                             </div>
                         )}
-                         {isPanTouched && panValidationStatus === 'mismatch' && (
+                        
+                        {/* VALIDATION STATUS CARD: Mismatch */}
+                         {panValidationStatus === 'mismatch' && (
                             <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
                                 <div className="flex items-center gap-2 mb-3">
-                                    <AlertTriangle className="text-yellow-600" />
+                                    <AlertTriangle className="text-yellow-600 w-5 h-5" />
                                     <span className="text-sm font-medium text-yellow-800">Name Mismatch Detected</span>
                                 </div>
                                 <div className="grid grid-cols-2 gap-3 mb-4">
                                     <div className="bg-white rounded-lg p-3">
-                                        <p className="text-xs text-neutral mb-1">Consent Name</p>
-                                        <p className="text-sm font-medium">{currentLead?.customerName}</p>
+                                        <p className="text-xs text-neutral mb-1">Consent Name (Form)</p>
+                                        <p className="text-sm font-medium">{customerFullName}</p>
                                     </div>
                                     <div className="bg-white rounded-lg p-3">
-                                        <p className="text-xs text-neutral mb-1">PAN Name</p>
-                                        <p className="text-sm font-medium">{panApiName}</p>
+                                        <p className="text-xs text-neutral mb-1">PAN Name (System)</p>
+                                        <p className="text-sm font-medium">{panApiName || 'N/A'}</p>
                                     </div>
                                 </div>
-                                <Textarea placeholder="Reason for name difference..." value={nameMismatchReason} onChange={e => setNameMismatchReason(e.target.value)} rows={2} className="rounded-lg"/>
+                                {nameMismatchReason && (
+                                    <div className='mt-3 border-t pt-3 border-yellow-100'>
+                                        <p className="text-xs font-medium text-yellow-900 mb-1">Provided Reason for Difference:</p>
+                                        <p className="text-sm text-yellow-800 italic">{nameMismatchReason}</p>
+                                    </div>
+                                )}
+                                {!nameMismatchReason && (
+                                     <div className='mt-3 border-t pt-3 border-yellow-100'>
+                                        <p className="text-xs text-yellow-700 italic">No reason provided. Use the Edit button above to document the reason if necessary.</p>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
-                ) : (
+                )}
+                
+                {/* No PAN Section */}
+                {formData.hasPan === 'no' && (
                     <div className="space-y-4">
                         <div>
                             <Label className="text-sm font-medium text-[#003366] mb-2 block">PAN Unavailability Reason *</Label>

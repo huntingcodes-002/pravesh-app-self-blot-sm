@@ -1,8 +1,9 @@
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, Filter, Plus, Eye, Play, Edit, Calendar, RotateCcw, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Filter, Plus, Eye, Phone, Edit, Calendar, RotateCcw, ChevronLeft, ChevronRight, Play } from 'lucide-react';
 import DashboardLayout from '@/components/DashboardLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLead, Lead, LeadStatus } from '@/contexts/LeadContext';
@@ -114,16 +115,37 @@ export default function LeadsDashboardPage() {
     router.push('/lead/step1');
   };
 
-  const handleAction = (lead: Lead, action: 'view' | 'edit') => {
+  const handleAction = (lead: Lead, action: 'view' | 'edit' | 'call') => {
     setCurrentLead(lead);
+    
     if (action === 'view') {
         setPreviewLead(lead); // Open preview modal
-    } else {
-        // Edit/Play navigates to the current step or starts review
-        const path = lead.currentStep ? `/lead/step${lead.currentStep}` : `/lead/step1`;
+        return;
+    } 
+    
+    if (action === 'call') {
+        // Mock phone call action
+        window.location.href = `tel:+91${lead.customerMobile}`;
+        return;
+    }
+
+    if (action === 'edit') {
+        // Determine if it's 'Continue' (Draft) or 'Edit' (Submitted/Completed)
+        const isDraft = lead.status === 'Draft';
+        const path = isDraft ? `/lead/step${lead.currentStep}` : `/lead/step${lead.currentStep}`; // Leads that are submitted should go back to step 1 or step 8/9, but here we use currentStep
         router.push(path);
     }
   };
+  
+  const handleEditButtonLogic = (lead: Lead) => {
+    const isFinalized = ['Approved', 'Rejected', 'Disbursed'].includes(lead.status);
+    const isDraft = lead.status === 'Draft';
+    const buttonText = isDraft ? 'Continue Application' : 'Edit Lead';
+    const buttonIcon = isDraft ? <Play className="w-4 h-4 mr-2" /> : <Edit className="w-4 h-4 mr-2" />;
+    
+    return { isFinalized, buttonText, buttonIcon };
+  }
+
 
   const handleClearFilters = () => {
       setFilters({ startDate: undefined, endDate: undefined, status: 'All' });
@@ -291,60 +313,82 @@ export default function LeadsDashboardPage() {
         </div>
 
         {/* Lead List */}
-        <div className="space-y-3">
+        <div className="space-y-4">
           {filteredLeads.length === 0 ? (
             <p className="text-center text-gray-500 py-8">No leads found matching your filters.</p>
           ) : (
-            filteredLeads.map((lead) => (
-              <Card key={lead.id} className="hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    {/* Left side: ID, Name, Mobile, Timestamp */}
-                    <div className="space-y-1">
-                      <p className="font-semibold text-gray-900">{lead.appId}</p>
-                      <p className="text-sm font-medium text-gray-700">{lead.customerName || 'New Lead'}</p>
-                      <p className="text-xs text-gray-500">{lead.customerMobile}</p>
-                      {/* Updated Timestamp */}
-                      <p className="text-xs text-gray-400">
-                        Updated: {format(new Date(lead.updatedAt), 'd MMM yyyy, hh:mm a')}
-                      </p>
-                      <div className="pt-1">
-                        {getStatusBadge(lead.status)}
-                      </div>
-                    </div>
+            filteredLeads.map((lead) => {
+              const { isFinalized, buttonText, buttonIcon } = handleEditButtonLogic(lead);
 
-                    {/* Right side: Actions (View, Play/Edit, Preview) */}
-                    <div className="flex space-x-2">
+              return (
+              <Card key={lead.id} className="hover:shadow-lg transition-shadow border-2 border-gray-100">
+                <CardContent className="p-4">
+                  <div className="flex flex-col space-y-3">
+                    
+                    {/* Row 1: App ID & Status */}
+                    <div className="flex justify-between items-start">
+                      <div className="space-y-1">
+                        <p className="font-semibold text-gray-900 flex items-center gap-2">
+                          {lead.appId} 
+                          {getStatusBadge(lead.status)}
+                        </p>
+                        <p className="text-sm font-medium text-gray-700">{lead.customerName || 'New Lead'}</p>
+                      </div>
+                      
+                      {/* Preview Button (Moved) */}
                       <Button
                         onClick={() => handleAction(lead, 'view')}
-                        variant="ghost"
+                        variant="outline"
                         size="icon"
-                        className="w-8 h-8 rounded-full text-blue-600 hover:bg-blue-100"
+                        className="w-10 h-10 rounded-full text-blue-600 hover:bg-blue-50 border-blue-200 flex-shrink-0"
                         title="Application Preview"
                       >
-                        <Eye className="w-4 h-4" />
+                        <Eye className="w-5 h-5" />
+                      </Button>
+                    </div>
+
+                    {/* Row 2: Mobile & Timestamp */}
+                    <div className='border-t border-dashed pt-3'>
+                        <p className="text-sm text-gray-500 mb-2">Mobile: <span className='font-medium text-gray-800'>{lead.customerMobile}</span></p>
+                        <p className="text-xs text-gray-400">
+                            Updated: {format(new Date(lead.updatedAt), 'd MMM yyyy, hh:mm a')}
+                        </p>
+                    </div>
+
+                    {/* Row 3: Action Buttons (Full Sized) */}
+                    <div className="grid grid-cols-2 gap-3 pt-3">
+                      
+                      {/* Call Customer Button */}
+                      <Button
+                        onClick={() => handleAction(lead, 'call')}
+                        className="h-12 bg-green-500 hover:bg-green-600 text-white font-semibold"
+                        title="Call Customer"
+                      >
+                        <Phone className="w-4 h-4 mr-2" />
+                        Call Customer
                       </Button>
 
+                      {/* Continue / Edit Button */}
                       <Button 
                         onClick={() => handleAction(lead, 'edit')}
-                        variant="ghost"
-                        size="icon"
-                        className="w-8 h-8 rounded-full text-green-600 hover:bg-green-100"
-                        title={lead.status === 'Draft' ? 'Continue Application' : 'Edit Details'}
-                      >
-                        {lead.status === 'Draft' ? (
-                          <Play className="w-4 h-4" />
-                        ) : (
-                          <Edit className="w-4 h-4" />
+                        disabled={isFinalized}
+                        className={cn(
+                            "h-12 font-semibold",
+                            isFinalized ? 
+                                "bg-gray-300 text-gray-600 cursor-not-allowed" : 
+                                "bg-blue-600 hover:bg-blue-700 text-white"
                         )}
+                        title={isFinalized ? `Application is ${lead.status}` : buttonText}
+                      >
+                        {buttonIcon}
+                        {buttonText}
                       </Button>
                       
-                      {/* REMOVED: Status Selection dropdown (Now in separate UI) */}
                     </div>
                   </div>
                 </CardContent>
               </Card>
-            ))
+            )})
           )}
         </div>
 
