@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -11,10 +12,16 @@ import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea'; // Import Textarea
+import { cn } from '@/lib/utils';
+
 
 export default function Step7Page() {
   const { currentLead, updateLead } = useLead();
   const router = useRouter();
+  
+  // Total steps updated to 11
+  const totalSteps = 11;
+  
   const [formData, setFormData] = useState({
     loanAmount: currentLead?.loanAmount || 500000,
     currency: currentLead?.formData?.step8?.currency || 'INR', // Added Currency
@@ -97,7 +104,7 @@ export default function Step7Page() {
         onExit={handleExit}
     >
       <div className="max-w-2xl mx-auto">
-        <ProgressBar currentStep={7} totalSteps={10} />
+        <ProgressBar currentStep={7} totalSteps={totalSteps} />
 
         <div className="bg-white rounded-xl shadow-sm p-6 space-y-6">
           <div>

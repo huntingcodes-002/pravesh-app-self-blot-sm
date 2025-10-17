@@ -132,7 +132,7 @@ export default function Step3Page() {
       onExit={handleExit}
     >
       <div className="max-w-2xl mx-auto pb-24">
-        <ProgressBar currentStep={3} totalSteps={10} />
+        <ProgressBar currentStep={3} totalSteps={11} totalSteps={10} />
 
         <div className="bg-white rounded-xl shadow-sm p-6 space-y-6">
           <h2 className="text-xl font-semibold text-[#003366] mb-6">Address Information</h2>

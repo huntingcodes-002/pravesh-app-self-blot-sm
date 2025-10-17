@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState } from 'react';
@@ -20,6 +21,10 @@ export default function Step8Page() {
     loan: false,
   });
   const [moveToNextStage, setMoveToNextStage] = useState(false);
+  
+  // Total steps updated to 11
+  const totalSteps = 11;
+
 
   const toggleSection = (section: keyof typeof expandedSections) => {
     setExpandedSections({ ...expandedSections, [section]: !expandedSections[section] });
@@ -33,10 +38,11 @@ export default function Step8Page() {
     if (!currentLead) return;
 
     if (moveToNextStage) {
+      // Navigate to the new Step 9 (Documents)
       updateLead(currentLead.id, {
         formData: {
           ...currentLead.formData,
-          step9: { moveToNextStage },
+          step9: { moveToNextStage }, // Note: step9 data is now a flag for moving forward
         },
         currentStep: 9,
       });
@@ -76,7 +82,7 @@ export default function Step8Page() {
       onExit={handleExit}
     >
       <div className="max-w-2xl mx-auto">
-        <ProgressBar currentStep={8} totalSteps={10} />
+        <ProgressBar currentStep={8} totalSteps={totalSteps} />
 
         <div className="bg-white rounded-xl shadow-sm p-6 space-y-6">
           <div>
@@ -285,7 +291,7 @@ export default function Step8Page() {
                 onCheckedChange={(checked) => setMoveToNextStage(checked as boolean)}
               />
               <Label htmlFor="moveToNextStage" className="cursor-pointer font-medium">
-                Move to Next Stage (Evaluation)
+                Move to Next Stage (Payments & Documents)
               </Label>
             </div>
           </div>
@@ -295,10 +301,19 @@ export default function Step8Page() {
               Previous
             </Button>
             <Button
-              onClick={handleSubmit}
+              onClick={() => {
+                if (moveToNextStage) {
+                    // Navigate to the new Step 9 (Documents)
+                    updateLead(currentLead.id, { currentStep: 9 });
+                    router.push('/lead/step9');
+                } else {
+                    submitLead(currentLead.id);
+                    router.push('/leads');
+                }
+              }}
               className="h-12 px-8 bg-green-600 hover:bg-green-700 text-white font-semibold"
             >
-              Submit
+              {moveToNextStage ? 'Continue to Documents' : 'Submit for Review'}
             </Button>
           </div>
         </div>

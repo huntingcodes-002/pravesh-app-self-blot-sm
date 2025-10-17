@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -50,6 +51,10 @@ export default function Step9Page() {
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [cameraPermissionDenied, setCameraPermissionDenied] = useState(false);
+  
+  // Total steps updated to 11
+  const totalSteps = 11;
+
 
   useEffect(() => {
     return () => {
@@ -165,7 +170,7 @@ export default function Step9Page() {
   };
 
   const handleRetry = (fileId: string) => {
-    // ... retry logic (unchanged)
+    // Mock retry logic
   };
 
   const handleDelete = (fileId: string) => {
@@ -182,12 +187,16 @@ export default function Step9Page() {
       return;
     }
     if (!currentLead) return;
+    
+    // Navigate to the new Step 10 (Payments)
     updateLead(currentLead.id, { formData: { ...currentLead.formData, step10: { files: uploadedFiles } }, currentStep: 10 });
     router.push('/lead/step10'); 
   };
   
   const handleContinueWithoutDocs = () => { 
     if (!currentLead) return;
+    
+    // Navigate to the new Step 10 (Payments)
     updateLead(currentLead.id, { formData: { ...currentLead.formData, step10: { files: uploadedFiles } }, currentStep: 10 });
     router.push('/lead/step10'); 
   };
@@ -209,7 +218,7 @@ export default function Step9Page() {
   return (
     <DashboardLayout title="Document Upload" showNotifications={false} showExitButton={true} onExit={handleExit}>
       <div className="max-w-2xl mx-auto">
-        <ProgressBar currentStep={9} totalSteps={10} />
+        <ProgressBar currentStep={9} totalSteps={totalSteps} />
 
         {isCameraOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex flex-col items-center justify-center p-4">

@@ -113,7 +113,7 @@ export default function Step1Page() {
       showExitButton={true}
     >
       <div className="max-w-2xl mx-auto pb-24">
-        <ProgressBar currentStep={1} totalSteps={10} />
+        <ProgressBar currentStep={1} totalSteps={11} totalSteps={10} />
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
           <h2 className="text-xl font-semibold text-[#003366] mb-6">Lead Information</h2>

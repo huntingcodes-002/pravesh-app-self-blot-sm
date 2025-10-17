@@ -74,7 +74,7 @@ export default function Step6Page() {
         onExit={handleExit}
     >
       <div className="max-w-2xl mx-auto">
-        <ProgressBar currentStep={6} totalSteps={10} />
+        <ProgressBar currentStep={6} totalSteps={11} totalSteps={10} />
 
         <div className="bg-white rounded-xl shadow-sm p-6 space-y-6">
           <div>
