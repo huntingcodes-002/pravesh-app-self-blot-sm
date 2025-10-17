@@ -341,7 +341,7 @@ export default function Step2Page() {
         />
         
       <div className="max-w-2xl mx-auto pb-24">
-        <ProgressBar currentStep={2} totalSteps={11} totalSteps={10} />
+        <ProgressBar currentStep={2} totalSteps={11} />
         
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-4">
             <div className="space-y-4">

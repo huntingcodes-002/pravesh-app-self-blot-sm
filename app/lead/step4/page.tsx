@@ -104,7 +104,7 @@ export default function Step4Page() {
       onExit={handleExit}
     >
       <div className="max-w-2xl mx-auto">
-        <ProgressBar currentStep={4} totalSteps={11} totalSteps={10} />
+        <ProgressBar currentStep={4} totalSteps={11} />
 
         <div className="bg-white rounded-xl shadow-sm p-6 space-y-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-6">Employment Information</h2>
