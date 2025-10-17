@@ -1,10 +1,26 @@
-
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 
 export type LeadStatus = 'Draft' | 'Submitted' | 'Approved' | 'Disbursed' | 'Rejected';
+
+export type PaymentStatus = 'Pending' | 'Paid' | 'Failed';
+
+export interface PaymentSession {
+  id: string;
+  feeType: 'Login / IMD Fee' | 'Other Fees';
+  amount: number;
+  remarks?: string;
+  status: PaymentStatus;
+  link: string;
+  createdAt: string;
+  updatedAt: string;
+  timeline: {
+    created: string;
+    sent: string;
+    received?: string;
+  }
+}
 
 export interface Lead {
   id: string;
@@ -22,6 +38,7 @@ export interface Lead {
   loanPurpose?: string;
   currentStep: number;
   formData: any;
+  payments: PaymentSession[];
   createdAt: string;
   updatedAt: string;
 }
@@ -34,7 +51,10 @@ interface LeadContextType {
   submitLead: (leadId: string) => void;
   updateLeadStatus: (leadId: string, status: LeadStatus) => void;
   setCurrentLead: (lead: Lead | null) => void;
-  deleteLead: (leadId: string) => void; // New function
+  deleteLead: (leadId: string) => void;
+  addPaymentToLead: (leadId: string, payment: PaymentSession) => void;
+  updatePaymentInLead: (leadId: string, paymentId: string, paymentUpdate: Partial<PaymentSession>) => void;
+  deletePaymentFromLead: (leadId: string, paymentId: string) => void;
 }
 
 const LeadContext = createContext<LeadContextType | undefined>(undefined);
@@ -49,8 +69,6 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
     const storedLeads = localStorage.getItem(STORAGE_KEY);
     if (storedLeads) {
       setLeads(JSON.parse(storedLeads));
-    } else {
-      // Dummy data initialization
     }
   }, []);
 
@@ -68,6 +86,7 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
       customerMobile: '',
       currentStep: 1,
       formData: {},
+      payments: [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
@@ -113,7 +132,7 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
     );
     saveLeads(updatedLeads);
   };
-  
+
   const deleteLead = (leadId: string) => {
     const updatedLeads = leads.filter(lead => lead.id !== leadId);
     saveLeads(updatedLeads);
@@ -121,6 +140,56 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
       setCurrentLead(null);
     }
   };
+
+  const addPaymentToLead = (leadId: string, payment: PaymentSession) => {
+    let updatedLead: Lead | undefined;
+    const updatedLeads = leads.map(lead => {
+      if (lead.id === leadId) {
+        updatedLead = { ...lead, payments: [...(lead.payments || []), payment], updatedAt: new Date().toISOString() };
+        return updatedLead;
+      }
+      return lead;
+    });
+    saveLeads(updatedLeads);
+    if (currentLead?.id === leadId && updatedLead) {
+        setCurrentLead(updatedLead);
+    }
+  };
+
+  const updatePaymentInLead = (leadId: string, paymentId: string, paymentUpdate: Partial<PaymentSession>) => {
+    let updatedLead: Lead | undefined;
+    const updatedLeads = leads.map(lead => {
+      if (lead.id === leadId) {
+        const updatedPayments = lead.payments.map(p =>
+          p.id === paymentId ? { ...p, ...paymentUpdate, updatedAt: new Date().toISOString() } : p
+        );
+        updatedLead = { ...lead, payments: updatedPayments, updatedAt: new Date().toISOString() };
+        return updatedLead;
+      }
+      return lead;
+    });
+    saveLeads(updatedLeads);
+    if (currentLead?.id === leadId && updatedLead) {
+        setCurrentLead(updatedLead);
+    }
+  };
+  
+  const deletePaymentFromLead = (leadId: string, paymentId: string) => {
+    let updatedLead: Lead | undefined;
+    const updatedLeads = leads.map(lead => {
+        if (lead.id === leadId) {
+            const updatedPayments = lead.payments.filter(p => p.id !== paymentId);
+            updatedLead = { ...lead, payments: updatedPayments, updatedAt: new Date().toISOString() };
+            return updatedLead;
+        }
+        return lead;
+    });
+    saveLeads(updatedLeads);
+    if (currentLead?.id === leadId && updatedLead) {
+        setCurrentLead(updatedLead);
+    }
+  };
+
 
   return (
     <LeadContext.Provider
@@ -132,7 +201,10 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
         submitLead,
         updateLeadStatus,
         setCurrentLead,
-        deleteLead
+        deleteLead,
+        addPaymentToLead,
+        updatePaymentInLead,
+        deletePaymentFromLead
       }}
     >
       {children}
