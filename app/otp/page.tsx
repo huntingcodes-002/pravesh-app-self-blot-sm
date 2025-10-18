@@ -158,7 +158,7 @@ export default function OtpVerificationPage() {
                 </Button>
                 
                 <div className="text-center">
-                    <span className="text-[#6B7280] text-sm">Didn't receive OTP? </span>
+                    <span className="text-[#6B7280] text-sm">Didn&apos;t receive OTP? </span>
                     <Button 
                         type="button" 
                         variant="link" 

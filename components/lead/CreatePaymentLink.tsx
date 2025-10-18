@@ -33,7 +33,7 @@ export default function CreatePaymentLink({ onLinkCreate, prefillData }: CreateP
     }
   };
   
-  const canSubmit = feeType && amount > 0;
+  const canSubmit = feeType && typeof amount === 'number' && amount > 0;
 
   return (
     <div className="bg-white rounded-xl shadow-sm p-6 space-y-6">

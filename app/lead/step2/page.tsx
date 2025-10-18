@@ -73,7 +73,7 @@ function NameEditDialog({
                        <Edit className="w-5 h-5 mr-2" /> Update Customer Name
                     </AlertDialogTitle>
                     <AlertDialogDescription>
-                        Update the customer's name. If a PAN mismatch occurs, you can optionally provide a reason.
+                        Update the customer&apos;s name. If a PAN mismatch occurs, you can optionally provide a reason.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
 
@@ -316,7 +316,7 @@ export default function Step2Page() {
                         <div className="flex items-center gap-2">
                             <p className="text-sm font-semibold text-[#003366]">{customerFullName || 'N/A'}</p>
                             {isNameMismatch && (
-                                <AlertTriangle className="text-yellow-600 w-4 h-4" title="Name Mismatch Detected"/>
+                                <AlertTriangle className="text-yellow-600 w-4 h-4" />
                             )}
                         </div>
                     </div>

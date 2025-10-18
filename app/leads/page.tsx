@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search, Filter, Plus, Eye, Phone, Edit, Calendar, RotateCcw, ChevronLeft, ChevronRight, Play } from 'lucide-react';
 import DashboardLayout from '@/components/DashboardLayout';
@@ -69,11 +69,11 @@ export default function LeadsDashboardPage() {
   const [canScrollNext, setCanScrollNext] = useState(false);
 
   // Embla Carousel Controls
-  const onSelect = () => {
+  const onSelect = useCallback(() => {
     if (!emblaApi) return;
     setCanScrollPrev(emblaApi.canScrollPrev());
     setCanScrollNext(emblaApi.canScrollNext());
-  };
+  }, [emblaApi]);
 
   useEffect(() => {
     if (emblaApi) {
@@ -84,7 +84,7 @@ export default function LeadsDashboardPage() {
         emblaApi.off('select', onSelect);
       };
     }
-  }, [emblaApi]);
+  }, [emblaApi, onSelect]);
 
   // Auth Redirect Check
   useEffect(() => {

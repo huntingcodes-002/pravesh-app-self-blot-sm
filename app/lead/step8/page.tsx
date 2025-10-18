@@ -238,19 +238,19 @@ export default function Step8Page() {
                       <div className="flex justify-between">
                         <span className="text-gray-600">Product Code:</span>
                         <span className="font-medium">
-                          {currentLead?.formData?.step7?.productCode || 'N/A'}
+                          {currentLead?.formData?.step8?.productCode || 'N/A'}
                         </span>
                       </div>
                        <div className="flex justify-between">
                         <span className="text-gray-600">Interest Rate:</span>
                         <span className="font-medium">
-                           {currentLead?.formData?.step7?.interestRate ? `${currentLead.formData.step7.interestRate}% p.a.` : 'N/A'}
+                           {currentLead?.formData?.step8?.interestRate ? `${currentLead.formData.step8.interestRate}% p.a.` : 'N/A'}
                         </span>
                       </div>
                        <div className="flex justify-between">
                         <span className="text-gray-600">Tenure:</span>
                         <span className="font-medium">
-                          {currentLead?.formData?.step7?.tenure ? `${currentLead.formData.step7.tenure} ${currentLead?.formData?.step7?.tenureUnit}` : 'N/A'}
+                          {currentLead?.formData?.step8?.tenure ? `${currentLead.formData.step8.tenure} ${currentLead?.formData?.step8?.tenureUnit}` : 'N/A'}
                         </span>
                       </div>
                        <div className="flex justify-between">
@@ -295,15 +295,15 @@ export default function Step8Page() {
             </div>
           </div>
 
-          <div className="flex justify-between pt-4">
-            <Button onClick={handlePrevious} variant="outline" className="h-12 px-8">
+          <div className="flex justify-between pt-4 gap-3">
+            <Button onClick={handlePrevious} variant="outline" className="h-12 px-6 flex-1">
               Previous
             </Button>
             <Button
               onClick={handleSubmit}
-              className="h-12 px-8 bg-green-600 hover:bg-green-700 text-white font-semibold"
+              className="h-12 px-6 flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold"
             >
-              {moveToNextStage ? 'Continue to Documents' : 'Submit for Review'}
+              {moveToNextStage ? 'Next' : 'Submit for Review'}
             </Button>
           </div>
         </div>

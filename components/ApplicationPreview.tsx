@@ -111,20 +111,37 @@ export default function ApplicationPreview({ lead, onClose }: ApplicationPreview
             ))}
 
             <PreviewSection title="Employment Details" icon={Briefcase}>
-                <DetailItem label="Occupation Type" value={formData?.step4?.occupationType} />
-                {formData?.step4?.occupationType === 'salaried' && (
+                <DetailItem label="Occupation Type" value={formData?.step5?.occupationType || 'N/A'} />
+                {formData?.step5?.occupationType === 'salaried' && (
                     <>
-                        <DetailItem label="Employer Name" value={formData?.step4?.employerName} />
-                        <DetailItem label="Designation" value={formData?.step4?.designation} />
-                        <DetailItem label="Industry" value={formData?.step4?.industry} />
+                        <DetailItem label="Employer Name" value={formData?.step5?.employerName || 'N/A'} />
+                        <DetailItem label="Designation" value={formData?.step5?.designation || 'N/A'} />
+                        <DetailItem label="Employment Type" value={formData?.step5?.employmentType || 'N/A'} />
+                        <DetailItem label="Employment Status" value={formData?.step5?.employmentStatus || 'N/A'} />
+                        <DetailItem label="Industry" value={formData?.step5?.industry || 'N/A'} />
+                        <DetailItem label="Nature of Business" value={formData?.step5?.natureOfBusiness || 'N/A'} />
                     </>
                 )}
-                 {formData?.step4?.occupationType === 'self-employed-professional' && (
+                {formData?.step5?.occupationType === 'self-employed-non-professional' && (
                     <>
-                        <DetailItem label="Organization" value={formData?.step4?.orgNameSEP} />
-                        <DetailItem label="Nature of Profession" value={formData?.step4?.natureOfProfession} />
-                        <DetailItem label="Years in Profession" value={formData?.step4?.yearsInProfession} />
+                        <DetailItem label="Organization Name" value={formData?.step5?.orgName || 'N/A'} />
+                        <DetailItem label="Nature of Business" value={formData?.step5?.natureOfBusinessSENP || 'N/A'} />
+                        <DetailItem label="Industry" value={formData?.step5?.industrySENP || 'N/A'} />
                     </>
+                )}
+                {formData?.step5?.occupationType === 'self-employed-professional' && (
+                    <>
+                        <DetailItem label="Organization Name" value={formData?.step5?.orgNameSEP || 'N/A'} />
+                        <DetailItem label="Nature of Profession" value={formData?.step5?.natureOfProfession || 'N/A'} />
+                        <DetailItem label="Years in Profession" value={formData?.step5?.yearsInProfession || 'N/A'} />
+                        <DetailItem label="Industry" value={formData?.step5?.industrySEP || 'N/A'} />
+                    </>
+                )}
+                {formData?.step5?.occupationType === 'others' && (
+                    <DetailItem label="Nature of Occupation" value={formData?.step5?.natureOfOccupation || 'N/A'} />
+                )}
+                {formData?.step5?.occupationType === 'retired' && (
+                    <DetailItem label="Previous Occupation" value={formData?.step5?.previousOccupation || 'N/A'} />
                 )}
             </PreviewSection>
 
@@ -142,21 +159,21 @@ export default function ApplicationPreview({ lead, onClose }: ApplicationPreview
             )}
             
             <PreviewSection title="Collateral" icon={Home}>
-                <DetailItem label="Type" value={formData?.step6?.collateralType} />
-                <DetailItem label="Ownership" value={formData?.step6?.ownershipType} />
-                <DetailItem label="Estimated Value" value={formatCurrency(Number(formData?.step6?.propertyValue))} />
-                <DetailItem label="Location" value={formData?.step6?.location} />
+                <DetailItem label="Type" value={formData?.step7?.collateralType || 'N/A'} />
+                <DetailItem label="Ownership" value={formData?.step7?.ownershipType || 'N/A'} />
+                <DetailItem label="Estimated Value" value={formData?.step7?.propertyValue ? formatCurrency(Number(formData.step7.propertyValue)) : 'N/A'} />
+                <DetailItem label="Location" value={formData?.step7?.location || 'N/A'} />
             </PreviewSection>
 
             <Separator />
 
             <PreviewSection title="Loan Details" icon={IndianRupee}>
                 <DetailItem label="Amount Requested" value={formatCurrency(lead.loanAmount)} />
-                <DetailItem label="Purpose" value={lead.loanPurpose || formData?.step7?.loanPurpose} />
-                <DetailItem label="Product Code" value={formData?.step7?.productCode} />
-                <DetailItem label="Tenure" value={formData?.step7?.tenure ? `${formData.step7.tenure} ${formData.step7.tenureUnit}` : 'N/A'} />
-                <DetailItem label="Interest Rate" value={formData?.step7?.interestRate ? `${formData.step7.interestRate}%` : 'N/A'} />
-                <DetailItem label="Assigned Officer" value={formData?.step7?.assignedOfficer} />
+                <DetailItem label="Purpose" value={lead.loanPurpose || formData?.step8?.loanPurpose} />
+                <DetailItem label="Product Code" value={formData?.step8?.productCode || 'N/A'} />
+                <DetailItem label="Tenure" value={formData?.step8?.tenure && formData?.step8?.tenureUnit ? `${formData.step8.tenure} ${formData.step8.tenureUnit}` : 'N/A'} />
+                <DetailItem label="Interest Rate" value={formData?.step8?.interestRate ? `${formData.step8.interestRate}%` : 'N/A'} />
+                <DetailItem label="Assigned Officer" value={formData?.step8?.assignedOfficer || 'N/A'} />
             </PreviewSection>
 
             <Separator />
@@ -185,8 +202,8 @@ export default function ApplicationPreview({ lead, onClose }: ApplicationPreview
             <Separator />
             
             <PreviewSection title="Evaluation & Assessment" icon={AlertTriangle}>
-                <DetailItem label="EMI Bounces Reason" value={formData?.step11?.emiBouncesReason || 'Not assessed yet'} />
-                <DetailItem label="High Inquiries Reason" value={formData?.step11?.highInquiriesReason || 'Not assessed yet'} />
+                <DetailItem label="EMI Bounces Reason" value={formData?.step11_eval?.emiBouncesReason || 'Not assessed yet'} />
+                <DetailItem label="High Inquiries Reason" value={formData?.step11_eval?.highInquiriesReason || 'Not assessed yet'} />
             </PreviewSection>
 
         </div>
